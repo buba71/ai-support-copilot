@@ -1,0 +1,15 @@
+[
+    "@symfony\/ux-vue",
+    "\/assets\/stimulus_bootstrap.js",
+    "\/assets\/styles\/app.css",
+    "\/assets\/@symfony\/ux-vue\/components.js",
+    "@symfony\/stimulus-bundle",
+    "@hotwired\/stimulus",
+    "\/assets\/@symfony\/stimulus-bundle\/controllers.js",
+    "\/assets\/@symfony\/ux-turbo\/turbo_controller.js",
+    "\/assets\/@symfony\/ux-vue\/render_controller.js",
+    "\/assets\/controllers\/hello_controller.js",
+    "@hotwired\/turbo",
+    "vue",
+    "@vue\/runtime-dom"
+]

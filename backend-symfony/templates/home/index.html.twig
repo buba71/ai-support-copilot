@@ -1,0 +1,8 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="container">
+        <h1>Test Vue.js</h1>
+        <div {{ vue_component('Hello', { name: 'Utilisateur' }) }}></div>
+    </div>
+{% endblock %}
