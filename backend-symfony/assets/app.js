@@ -10,4 +10,4 @@ import './styles/app.css';
 
 console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');
 
-registerVueControllerComponents();
+registerVueControllerComponents(require.context('./vue/controllers', true, /\.vue$/));

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\services;
 
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
@@ -31,7 +31,7 @@ final readonly class AiClient
                 url: $this->aiEndpoint,
                 options: [
                     'json' => [
-                        'ticker' => $ticket
+                        'ticket' => $ticket
                     ],
                     'timeout' => 10,
                 ]

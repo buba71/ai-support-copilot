@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\AnalyseTicket;
 
-use App\Services\AiClient;
+use App\services\AiClient;
 
 final readonly class AnalyseTicket
 {
