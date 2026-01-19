@@ -37,7 +37,7 @@ final readonly class AiClient
                 ]
             );
 
-            return $response->toArray(false);
+            return $response->toArray();
 
         } catch (
             TransportExceptionInterface |
