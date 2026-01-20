@@ -1,0 +1,13 @@
+TITLE: Extension de garantie pour clients premium
+
+RULE:
+Les clients disposant du statut premium bénéficient
+d’une extension de garantie de 12 mois supplémentaires
+en plus de la garantie standard.
+
+CONDITION:
+Le statut premium doit être actif au moment de l’achat.
+
+ACTION:
+Si le client est premium et que la durée totale de garantie
+n’excède pas 36 mois, la demande doit être acceptée.

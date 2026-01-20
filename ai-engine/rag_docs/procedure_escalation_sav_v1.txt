@@ -1,0 +1,13 @@
+TITLE: Procédure d’escalade du service après-vente
+
+RULE:
+Un ticket doit être escaladé au service qualité dans les cas suivants :
+- doute sur l’éligibilité à la garantie
+- litige avec le client
+- réclamation répétée sur le même produit
+
+ACTION:
+L’agent support doit :
+1. Marquer le ticket comme "À escalader"
+2. Ajouter un commentaire expliquant la décision
+3. Notifier le service qualité
