@@ -3,36 +3,8 @@
 {% block body %}
     <div class="container">
         <h1>Test Vue.js</h1>
-        <p>Test du composant Hello:</p>
-        <div {{ vue_component('Hello', {name: 'Test'}) }}></div>
-        
         <hr style="margin: 20px 0;">
-        
         <p>Test du composant TicketAnalyser:</p>
         <div {{ vue_component('TicketAnalyser') }}></div>
     </div>
-    
-    <script>
-        // Debug: Vérifier si le composant est enregistré
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('Vérification des composants Vue enregistrés...');
-            if (typeof window.resolveVueComponent === 'function') {
-                try {
-                    const helloComponent = window.resolveVueComponent('Hello');
-                    console.log('Composant Hello trouvé:', helloComponent);
-                } catch (e) {
-                    console.error('Erreur lors du chargement de Hello:', e);
-                }
-                
-                try {
-                    const ticketComponent = window.resolveVueComponent('TicketAnalyser');
-                    console.log('Composant TicketAnalyser trouvé:', ticketComponent);
-                } catch (e) {
-                    console.error('Erreur lors du chargement de TicketAnalyser:', e);
-                }
-            } else {
-                console.error('window.resolveVueComponent n\'est pas défini !');
-            }
-        });
-    </script>
 {% endblock %}
