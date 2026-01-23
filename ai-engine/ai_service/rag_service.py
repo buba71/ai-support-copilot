@@ -1,41 +1,27 @@
 import os
 import numpy as np
-from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from ai_service.vector_db import VectorDB
 
 class RagService:
-    def __init__(self, documents: list[str]):
-        self.documents = documents
-        self.embeddings = self._embed_documents(documents)
+    def __init__(self):
+        self.vector_db = VectorDB()
 
-    def _embed_documents(self, docs):
-        response = client.embeddings.create(
-          model="text-embedding-3-small",
-          input=docs
-        )
-        return [np.array(d.embedding) for d in response.data]
+    def search(self, query: str, k: int = 2):
+        """
+        Retourne des chunks enrichis :
+        - content
+        - source
+        - score
+        """
+        results = self.vector_db.search(query, k=k)
 
-    def _embed_query(self, query: str):
-        response = client.embeddings.create(
-          model="text-embedding-3-small",
-          input=[query]
-        )
-        return np.array(response.data[0].embedding)
+        enriched_results = []
+        for item in results:
+            enriched_results.append({
+                "content": item["content"],
+                "source": item["metadata"].get("source"),
+                "score": round(1 - item["distance"], 3) # score = 1 - distance (plus proche = plus haut score)
+            })
 
-    def _similarity(self, v1, v2):
-        return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+        return enriched_results
 
-    def search(self, query: str, k=2):
-        query_vec = self._embed_query(query)
-        print(query_vec)
-
-        results = []
-
-        for doc, doc_vec in zip(self.documents, self.embeddings):
-            score = self._similarity(query_vec, doc_vec)
-            results.append((doc, score))
-
-        results.sort(key=lambda x: x[1], reverse=True)
-
-        return results[:k]

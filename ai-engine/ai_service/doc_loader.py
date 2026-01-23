@@ -7,5 +7,5 @@ def load_docs(path: str):
         docs.append(file.read_text(encoding="utf-8"))
     return docs
 
-documents = load_docs("rag_docs")
-rag = RagService(documents) 
+# documents = load_docs("rag_docs")
+# rag = RagService(documents) 

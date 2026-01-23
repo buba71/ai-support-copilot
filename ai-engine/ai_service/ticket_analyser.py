@@ -18,13 +18,13 @@ class TicketAnalyzer:
         - retrieve relevant knowledge (RAG)
         - build prompt
         - call LLM
-        - validate prompt 
+        - validate response
         """
 
         # 1. Retrieve relevant documents from 
         rag_results = self.rag.search(ticket_text, k=2)
 
-        context = "\n\n".join([doc for doc, score in rag_results])
+        context = "\n\n".join([doc["content"] for doc in rag_results])
 
         # 2. Build the final prompt
 
@@ -63,10 +63,11 @@ class TicketAnalyzer:
 
             result["rag_documents"] = [
                 {
-                    "content": doc[:500], # limit length for logging
-                    "score": float(score)
+                    "source": doc["source"],
+                    "score": doc["score"],
+                    "excerpt": doc["content"][:500]
                 }
-                for doc, score in rag_results
+                for doc in rag_results
             ]
 
             return result
