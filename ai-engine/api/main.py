@@ -5,10 +5,10 @@ from ai_service.ticket_analyser import TicketAnalyzer
 from ai_service.rag_service import RagService
 from ai_service.doc_loader import load_docs
 
-# 1. Load knowledge base at startup
-documents = load_docs("rag_docs")
+# 1. Load knowledge base at startup (optional if persistent)
+# documents = load_docs("rag_docs")
 
-rag = RagService(documents)
+rag = RagService()
 
 
 app = FastAPI()
