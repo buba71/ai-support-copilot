@@ -24,14 +24,24 @@ def load_documents():
 
 
 if __name__ == "__main__":
-    db = VectorDB()
 
+    db = VectorDB()
     docs = load_documents()
 
     if not docs:
         print("⚠️ No documents found in rag_docs/")
         exit(0)
 
-    db.index_documents(docs)
+    indexed = 0
+    skipped = 0
 
-    print(f"✅ {len(docs)} documents indexed into vector DB")
+    for doc in docs:
+        if db.exists(doc["id"]):
+            skipped += 1
+            continue
+
+        db.index_documents([doc])
+        indexed += 1
+
+    print(f"✅ {indexed} documents indexed")
+    print(f"⏭️ {skipped} documents skipped (already indexed)")

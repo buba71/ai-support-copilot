@@ -95,6 +95,16 @@ class VectorDB:
 
         return matches
 
+    def exists(self, doc_id: str) -> bool:
+        """
+        Check if a document with given ID already exists in the collection.
+        """
+        try:
+            self.collection.get(ids=[doc_id])
+            return True
+        except Exception:
+            return False
+
 
 # ------------------------------------------------------------
 # TEST MANUEL (apprentissage)
