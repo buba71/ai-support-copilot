@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 myenv/
 .chroma/
+chroma/
 rag_docs/

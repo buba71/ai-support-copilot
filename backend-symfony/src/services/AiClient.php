@@ -19,12 +19,12 @@ final readonly class AiClient
 
     /**
     * Sends text to the AI service for analysis and returns the response.
-    * @param string $text The text to be analyzed.
-    * @return string The analysis result from the AI service.
+    * @param string $ticket The text to be analyzed.
+    * @return array The analysis result from the AI service.
     * @throws \RuntimeException if there is an error communicating with the AI service.
     */
-   public function analyse(string $ticket): array
-   {
+    public function analyse(string $ticket): array
+    {
         try {
             $response = $this->httpClient->request(
                 method: 'POST',
@@ -49,5 +49,5 @@ final readonly class AiClient
                 previous: $e
             );
         }
-   }
+    }
 }

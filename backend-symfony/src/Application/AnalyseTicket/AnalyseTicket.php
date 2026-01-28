@@ -12,10 +12,13 @@ final readonly class AnalyseTicket
         private AiClient $aiClient,
     ) {}
 
+    /**
+     * @param string $ticketContent
+     * @return AnalyseTicketResult
+     */
     public function execute(string $ticketContent): AnalyseTicketResult
     {
         $result = $this->aiClient->analyse($ticketContent);
-
         return AnalyseTicketResult::fromArray($result);
     }
 }
