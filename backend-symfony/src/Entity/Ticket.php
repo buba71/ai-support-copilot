@@ -10,6 +10,12 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: TicketRepository::class)]
 class Ticket
 {
+
+    public function __construct()
+    {
+        $this->ticketAnalysis = new ArrayCollection();
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -21,14 +27,23 @@ class Ticket
     #[ORM\OneToMany(targetEntity: TicketAnalysis::class, mappedBy: 'ticket', cascade: ['persist'], orphanRemoval: true)]
     private Collection $ticketAnalysis;
 
-    public function __construct()
-    {
-        $this->ticketAnalysis = new ArrayCollection();
-    }
+    #[ORM\Column(type: 'text')]
+    private ?string $content = null;
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getContent(): ?string
+    {
+        return $this->content;
+    }
+
+    public function setContent(string $content): static
+    {
+        $this->content = $content;
+        return $this;
     }
 
     /**

@@ -13,8 +13,14 @@ class TicketAnalysis
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\Column(type:'text')]
+    private ?string $summary = null;
+
     #[ORM\Column(length: 255)]
-    private ?string $analysisContent = null;
+    private ?string $category = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $urgency = null;
 
     #[ORM\Column]
     private ?float $score = null;
@@ -30,15 +36,37 @@ class TicketAnalysis
         return $this->id;
     }
 
-    public function getAnalysisContent(): ?string
+    public function getSummary(): ?string
     {
-        return $this->analysisContent;
+        return $this->summary;
     }
 
-    public function setAnalysisContent(string $analysisContent): static
+    public function setSummary(string $summary): static
     {
-        $this->analysisContent = $analysisContent;
+        $this->summary = $summary;
 
+        return $this;
+    }
+
+    public function getCategory(): ?string
+    {
+        return $this->category;
+    }
+
+    public function setCategory(string $category): static
+    {
+        $this->category = $category;
+        return $this;
+    }
+
+    public function getUrgency(): ?string
+    {
+        return $this->urgency;
+    }
+
+    public function setUrgency(string $urgency): static
+    {
+        $this->urgency = $urgency;
         return $this;
     }
 
