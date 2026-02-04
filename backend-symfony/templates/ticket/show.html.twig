@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+  <h1>Ticket #{{ ticket.id }}</h1>
+
+  {{ vue_controller(
+    'TicketAiAnalyses',
+    { ticketId: ticket.id }
+  ) }}
+{% endblock %}

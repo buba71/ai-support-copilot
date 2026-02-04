@@ -1,3 +1,38 @@
+<template>
+  <div class="ticket-analyser">
+    <textarea
+      v-model="ticket"
+      placeholder="Colle le ticket client ici…"
+      class="ticket-input"
+      rows="4"
+    />
+
+    <button
+      @click="analyzeTicket"
+      class="analyze-button"
+      :disabled="loading"
+    >
+      {{ loading ? 'Analyse en cours…' : 'Analyser le ticket' }}
+    </button>
+
+    <p v-if="error" class="error-message">{{ error }}</p>
+
+    <div v-if="result" class="result-box">
+      <p><strong>Résumé :</strong> {{ result.summary }}</p>
+      <p><strong>Catégorie :</strong> {{ result.category }}</p>
+      <p><strong>Urgence :</strong> {{ result.urgency }}</p>
+
+      <div v-if="result.sources?.length">
+        <h4 class="sources-title">Sources utilisées :</h4>
+        <ul class="sources-list">
+          <li v-for="(src, i) in result.sources" :key="i">
+            {{ src }}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</template>
 <script setup>
 import { ref } from 'vue'
 
@@ -35,41 +70,6 @@ const analyzeTicket = async () => {
 }
 </script>
 
-<template>
-  <div class="ticket-analyser">
-    <textarea
-      v-model="ticket"
-      placeholder="Colle le ticket client ici…"
-      class="ticket-input"
-      rows="4"
-    />
-
-    <button
-      @click="analyzeTicket"
-      class="analyze-button"
-      :disabled="loading"
-    >
-      {{ loading ? 'Analyse en cours…' : 'Analyser le ticket' }}
-    </button>
-
-    <p v-if="error" class="error-message">{{ error }}</p>
-
-    <div v-if="result" class="result-box">
-      <p><strong>Résumé :</strong> {{ result.summary }}</p>
-      <p><strong>Catégorie :</strong> {{ result.category }}</p>
-      <p><strong>Urgence :</strong> {{ result.urgency }}</p>
-
-      <div v-if="result.sources?.length">
-        <h4 class="sources-title">Sources utilisées :</h4>
-        <ul class="sources-list">
-          <li v-for="(src, i) in result.sources" :key="i">
-            {{ src }}
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .ticket-analyser {
