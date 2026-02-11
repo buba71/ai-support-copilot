@@ -3,8 +3,10 @@
 {% block body %}
   <h1>Ticket #{{ ticket.id }}</h1>
 
-  {{ vue_controller(
-    'TicketAiAnalyses',
+  <p>{{ ticket.content }}</p>
+
+  {{ vue_component(
+    'TicketAiAnalysis',
     { ticketId: ticket.id }
   ) }}
 {% endblock %}

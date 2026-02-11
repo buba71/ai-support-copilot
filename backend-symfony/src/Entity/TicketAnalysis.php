@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\TicketAnalysisRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TicketAnalysisRepository::class)]
@@ -27,6 +28,9 @@ class TicketAnalysis
 
     #[ORM\Column]
     private array $sources = [];
+    
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'ticketAnalysis')]
     private ?Ticket $ticket = null;
@@ -105,4 +109,17 @@ class TicketAnalysis
 
         return $this;
     }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
 }
+
