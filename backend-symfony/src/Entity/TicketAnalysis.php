@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\TicketAnalysisRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -34,6 +36,17 @@ class TicketAnalysis
 
     #[ORM\ManyToOne(inversedBy: 'ticketAnalysis')]
     private ?Ticket $ticket = null;
+
+    /**
+     * @var Collection<int, TicketAiAnalysisFeedback>
+     */
+    #[ORM\OneToMany(mappedBy: 'analysis', targetEntity: TicketAiAnalysisFeedback::class)]
+    private Collection $feedbacks;
+
+    public function __construct()
+    {
+        $this->feedbacks = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -118,6 +131,30 @@ class TicketAnalysis
     public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TicketAiAnalysisFeedback>
+     */
+    public function getFeedbacks(): Collection
+    {
+        return $this->feedbacks;
+    }
+
+    public function addFeedback(TicketAiAnalysisFeedback $feedback): static
+    {
+        if (!$this->feedbacks->contains($feedback)) {
+            $this->feedbacks->add($feedback);
+        }
+
+        return $this;
+    }
+
+    public function removeFeedback(TicketAiAnalysisFeedback $feedback): static
+    {
+        $this->feedbacks->removeElement($feedback);
 
         return $this;
     }
