@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Api;
 
 use App\Entity\Ticket;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
-final class TicketAnalysisApiController extends AbstractController
+final class TicketAiAnalysisController extends AbstractController
 {
-    #[Route('/api/tickets/{id}/ai-analyses', name: 'api_ticket_analyses', methods: ['GET'])]
+    #[Route('/api/tickets/{id}/ai-analyses', name: 'api_ticket_ai_analyses', methods: ['GET'])]
     public function __invoke(Ticket $ticket): JsonResponse
     {
         $analyses = $ticket->getTicketAnalysis();
