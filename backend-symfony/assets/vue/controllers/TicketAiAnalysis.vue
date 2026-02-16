@@ -8,6 +8,7 @@
     </header>
 
     <!-- Loading -->
+
     <p v-if="loading" class="ai-analyses__state">
       Chargement de l’analyse IA…
     </p>
@@ -83,26 +84,28 @@ const error = ref(false)
  */
 onMounted(async () => {
   try {
+    const url = `/api/tickets/${props.ticketId}/ai-analyses`;    
     const response = await fetch(
-      `/api/tickets/${props.ticketId}/ai-analyses`,
+      url,
       {
         headers: { Accept: 'application/json' },
       }
-    )
-
+    );
+    
     if (!response.ok) {
-      throw new Error('API error')
+      throw new Error('API error');
     }
 
-    const data = await response.json()
+    const data = await response.json();
     analyses.value = data.aiAnalyses ?? []
+    
   } catch (e) {
-    console.error('[TicketAiAnalyses]', e)
     error.value = true
   } finally {
     loading.value = false
   }
 })
+
 
 /**
  * Helpers

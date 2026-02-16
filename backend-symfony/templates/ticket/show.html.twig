@@ -1,12 +1,10 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-  <h1>Ticket #{{ ticket.id }}</h1>
-
-  <p>{{ ticket.content }}</p>
-
-  {{ vue_component(
-    'TicketAiAnalysis',
-    { ticketId: ticket.id }
-  ) }}
+    <div class="container">
+        <h1>Ticket {{ ticket.id }}</h1>
+        <hr style="margin: 20px 0;">
+        <p>Ticket analysis history:</p>
+        <div {{ vue_component('TicketAiAnalysis', { ticketId: ticket.id }) }}></div>
+    </div>
 {% endblock %}

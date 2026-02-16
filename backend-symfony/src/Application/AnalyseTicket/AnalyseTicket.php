@@ -36,6 +36,7 @@ final readonly class AnalyseTicket
         $ticketAnalysis->setScore($result->score);
         $ticketAnalysis->setSources($result->sources);
         $ticketAnalysis->setCreatedAt(new \DateTime());
+        
 
         $this->entityManager->persist($ticket);
         $this->entityManager->persist($ticketAnalysis);
