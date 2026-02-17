@@ -47,6 +47,43 @@
           </li>
         </ul>
       </div>
+      
+      <div class="ai-analysis-card__feedback">
+        <div>
+          <textarea
+            v-if="!submitted[analysis.id]"
+            v-model="comments[analysis.id]"
+            class="ai-analysis-card__comment"
+            placeholder="Commentaire optionnel…"
+          ></textarea>
+        </div>
+        <div class="ai-analysis-card__actions">
+          <button
+            @click="sendFeedback(analysis.id, 'approved')"
+            :disabled="submitting[analysis.id] || submitted[analysis.id]"
+          >
+            👍 Analyse pertinente
+          </button>
+        
+          <button
+            @click="sendFeedback(analysis.id, 'rejected')"
+            :disabled="submitting[analysis.id] || submitted[analysis.id]"
+          >
+            👎 Analyse non pertinente
+          </button>
+        
+          <p
+            v-if="submitted[analysis.id]"
+            class="ai-analysis-card__feedback-status"
+          >
+            Feedback envoyé
+          </p>
+
+          
+        </div>
+        
+      </div>
+
     </article>
 
     <!-- Empty -->
@@ -78,11 +115,15 @@ const props = defineProps({
 const analyses = ref([])
 const loading = ref(true)
 const error = ref(false)
+const submitting = ref({})
+const submitted = ref({})
+const comments = ref({})
 
 /**
  * Lifecycle
  */
 onMounted(async () => {
+
   try {
     const url = `/api/tickets/${props.ticketId}/ai-analyses`;    
     const response = await fetch(
@@ -106,6 +147,43 @@ onMounted(async () => {
   }
 })
 
+async function sendFeedback(analysisId, decision) {
+  if (submitted.value[analysisId]) {
+    return
+  }
+
+  submitting.value[analysisId] = true
+
+  try {
+    const response = await fetch(
+      `/api/ai-analyses/${analysisId}/feedback`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          decision,
+          comment: comments.value[analysisId] ?? null
+        }),
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error('Feedback API error')
+    }
+
+    submitted.value[analysisId] = true
+
+  } catch (e) {
+
+    console.error('[AI Feedback]', e)
+    alert('Erreur lors de l’envoi du feedback')
+
+  } finally {
+    submitting.value[analysisId] = false
+  }
+}
 
 /**
  * Helpers
@@ -165,5 +243,40 @@ function formatDate(isoDate) {
 .ai-analysis-card__sources {
   font-size: 0.85rem;
   color: #555;
+}
+
+.ai-analysis-card__feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.ai-analysis-card__feedback button {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.ai-analysis-card__feedback button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-analysis-card__feedback-status {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #4a7;
+}
+.ai-analysis-card__comment {
+  width: 70%;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  resize: vertical;
 }
 </style>
