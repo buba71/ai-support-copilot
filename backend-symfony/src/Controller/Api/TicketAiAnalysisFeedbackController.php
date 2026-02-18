@@ -9,6 +9,7 @@ use App\Entity\TicketAiAnalysisFeedback;
 use App\Enum\AiFeedbackDecision;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -45,4 +46,29 @@ final class TicketAiAnalysisFeedbackController extends AbstractController
 
         return $this->json(null, Response::HTTP_CREATED);
     }
+
+    #[Route('/{id}/feedbacks', name: 'api_ticket_ai_analysis_feedback_get', methods: ['GET'])]
+    public function getFeedbacks(
+        TicketAnalysis $analysis
+    ): JsonResponse {
+
+        $feedbacks = $analysis->getFeedbacks();
+
+        $response = $this->json([
+            'analysisId' => $analysis->getId(),
+            'feedbacks'  => array_map(fn(TicketAiAnalysisFeedback $fb) => [
+                'id' => $fb->getId(),
+                'decision' => $fb->getDecision()->value,
+                'comment' => $fb->getComment(),
+                'createdAt' => $fb->getCreatedAt()->format('Y-m-d H:i:s'),
+            ], $feedbacks->toArray())
+        ]);
+
+        return $response;
+    }
 }
+
+
+
+    
+

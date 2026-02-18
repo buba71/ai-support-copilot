@@ -78,10 +78,24 @@
           >
             Feedback envoyé
           </p>
-
-          
         </div>
-        
+
+        <div
+          v-if="feedbacks[analysis.id]?.length"
+          class="ai-analysis-card__feedbacks"
+        >
+          <h4>Avis humains</h4>
+
+          <ul>
+            <li v-for="fb in feedbacks[analysis.id]" :key="fb.id">
+              <strong>
+                {{ fb.decision === 'approved' ? '👍' : '👎' }}
+              </strong>
+              <span>{{ formatDate(fb.createdAt) }}</span>
+              <p v-if="fb.comment">{{ fb.comment }}</p>
+            </li>
+          </ul>
+        </div>
       </div>
 
     </article>
@@ -118,6 +132,8 @@ const error = ref(false)
 const submitting = ref({})
 const submitted = ref({})
 const comments = ref({})
+const feedbacks = ref({})
+const feedbacksLoading = ref({})
 
 /**
  * Lifecycle
@@ -125,7 +141,7 @@ const comments = ref({})
 onMounted(async () => {
 
   try {
-    const url = `/api/tickets/${props.ticketId}/ai-analyses`;    
+    const url = `/api/tickets/${props.ticketId}/ai-analyses`;
     const response = await fetch(
       url,
       {
@@ -147,12 +163,17 @@ onMounted(async () => {
   }
 })
 
+/**
+ * Send feedback
+ */
 async function sendFeedback(analysisId, decision) {
   if (submitted.value[analysisId]) {
     return
   }
 
   submitting.value[analysisId] = true
+
+  await loadFeedbacks(analysisId)
 
   try {
     const response = await fetch(
@@ -184,6 +205,33 @@ async function sendFeedback(analysisId, decision) {
     submitting.value[analysisId] = false
   }
 }
+
+/**
+ * Load feedbacks for an analysis
+ */
+async function loadFeedbacks(analysisId) {
+  feedbacksLoading.value[analysisId] = true
+
+  try {
+    const response = await fetch(
+      `/api/ai-analyses/${analysisId}/feedbacks`,
+      { headers: { Accept: 'application/json' } }
+    )
+
+    if (!response.ok) {
+      throw new Error('Feedbacks API error')
+    }
+
+    const data = await response.json()
+    feedbacks.value[analysisId] = data.feedbacks ?? []
+  } catch (e) {
+    console.error('[AI Feedbacks]', e)
+    feedbacks.value[analysisId] = []
+  } finally {
+    feedbacksLoading.value[analysisId] = false
+  }
+}
+
 
 /**
  * Helpers
@@ -270,6 +318,7 @@ function formatDate(isoDate) {
   font-size: 0.8rem;
   color: #4a7;
 }
+
 .ai-analysis-card__comment {
   width: 70%;
   margin-top: 0.5rem;
@@ -279,4 +328,19 @@ function formatDate(isoDate) {
   border: 1px solid #ddd;
   resize: vertical;
 }
+
+.ai-analysis-card__feedbacks {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.ai-analysis-card__feedbacks ul {
+  padding-left: 1rem;
+}
+
+.ai-analysis-card__feedbacks li {
+  margin-bottom: 0.5rem;
+}
+
 </style>
