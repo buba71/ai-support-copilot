@@ -16,24 +16,23 @@ def load_documents():
             "id": file_path.stem,
             "content": content,
             "metadata": {
-                "source": file_path.name
+                "source": file_path.stem
             }
         })
 
     return documents
 
 
-if __name__ == "__main__":
-
+def main():
     db = VectorDB()
     docs = load_documents()
 
     if not docs:
         print("⚠️ No documents found in rag_docs/")
-        exit(0)
+        return
 
-    indexed = 0
-    skipped = 0
+    indexed: int = 0
+    skipped: int = 0
 
     for doc in docs:
         if db.exists(doc["id"]):
@@ -45,3 +44,7 @@ if __name__ == "__main__":
 
     print(f"✅ {indexed} documents indexed")
     print(f"⏭️ {skipped} documents skipped (already indexed)")
+
+
+if __name__ == "__main__":
+    main()

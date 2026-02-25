@@ -32,15 +32,10 @@ class TicketAnalyzer:
 
         # 2. Build the final prompt
 
-        prompt = f"""
-            {TICKET_ANALYSIS_PROMPT}
-
-            Ticket:
-            {ticket_text}
-
-            Context:
-            {context}
-            """
+        prompt = TICKET_ANALYSIS_PROMPT.format(
+            context=context,
+            ticket=ticket_text
+        )
 
         messages = [
             {

@@ -52,14 +52,14 @@ YOUR TASK
 RESPONSE FORMAT (STRICT JSON)
 ────────────────────────────────────────
 
-{
+{{
   "summary": "...",
   "category": "...",
   "urgency": "low",
   "recommended_policy": "...",
   "escalation_required": true,
   "justification": "..."
-}
+}}
 
 ────────────────────────────────────────
 CONTEXT

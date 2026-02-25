@@ -99,11 +99,8 @@ class VectorDB:
         """
         Check if a document with given ID already exists in the collection.
         """
-        try:
-            self.collection.get(ids=[doc_id])
-            return True
-        except Exception:
-            return False
+        results = self.collection.get(ids=[doc_id])
+        return len(results["ids"]) > 0
 
 
 # ------------------------------------------------------------
