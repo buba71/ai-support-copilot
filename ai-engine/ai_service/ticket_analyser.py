@@ -12,7 +12,7 @@ class TicketAnalyzer:
         self.llm = LLMClient()
         self.rag = rag_service
 
-    def analyze(self, ticket_text: str) -> dict:
+    def analyze(self, ticket_text: str, rag_usage: bool = True) -> dict:
         """
         Main orchestration method:
         - retrieve relevant knowledge (RAG)
@@ -21,10 +21,14 @@ class TicketAnalyzer:
         - validate response
         """
 
-        # 1. Retrieve relevant documents from 
-        rag_results = self.rag.search(ticket_text, k=2)
+        if  rag_usage:
+            # 1. Retrieve relevant documents from 
+            rag_results = self.rag.search(ticket_text, k=2)
 
-        context = "\n\n".join([doc["content"] for doc in rag_results])
+            context = "\n\n".join([doc["content"] for doc in rag_results])
+        else:
+            rag_results = []
+            context = ""
 
         # 2. Build the final prompt
 

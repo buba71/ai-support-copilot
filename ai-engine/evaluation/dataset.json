@@ -1,0 +1,205 @@
+[
+  {
+  "id": "T-E01",
+  "ticket": "If you refuse to replace my product, I will contact my lawyer and take legal action. This is unacceptable.",
+  "expected_policy": "procedure_escalation_sav_v1",
+  "expected_escalation": true,
+  "complexity": "high"
+},
+{
+  "id": "T-E02",
+  "ticket": "As a premium customer for 5 years, I expect a full refund even though the warranty expired 8 months ago.",
+  "expected_policy": "policy_premium_extension_v1",
+  "expected_escalation": true,
+  "complexity": "medium"
+},
+{
+  "id": "T-E03",
+  "ticket": "My device exploded while charging overnight and caused damage to my desk.",
+  "expected_policy": "procedure_escalation_sav_v1",
+  "expected_escalation": true,
+  "complexity": "high"
+},
+{
+  "id": "T-E04",
+  "ticket": "The product was bought 29 months ago under premium status, but I changed my subscription last year. Is it still covered?",
+  "expected_policy": "policy_premium_extension_v1",
+  "expected_escalation": true,
+  "complexity": "high"
+},
+{
+  "id": "T-E05",
+  "ticket": "I want a free upgrade to the latest model because I experienced repeated minor issues. I am considering cancelling my contract.",
+  "expected_policy": "procedure_escalation_sav_v1",
+  "expected_escalation": true,
+  "complexity": "medium"
+},
+{
+  "id": "T-NE01",
+  "ticket": "I bought the product 4 years ago and it stopped working. Can I still use the warranty?",
+  "expected_policy": "policy_warranty_v1",
+  "expected_escalation": false,
+  "complexity": "simple"
+},
+{
+  "id": "T-NE03",
+  "ticket": "As a premium customer, I would like to confirm whether my product bought 18 months ago is still covered.",
+  "expected_policy": "policy_premium_extension_v1",
+  "expected_escalation": false,
+  "complexity": "medium"
+},
+{
+  "id": "T-NE04",
+  "ticket": "Can you explain the warranty duration for standard customers?",
+  "expected_policy": "faq_support_v1",
+  "expected_escalation": false,
+  "complexity": "simple"
+},
+{
+  "id": "T-NE05",
+  "ticket": "The screen has a small flicker sometimes, but the device still works. What should I do?",
+  "expected_policy": "faq_support_v1",
+  "expected_escalation": false,
+  "complexity": "medium"
+  },
+  {
+    "id": "T-I01",
+    "ticket": "J'ai acheté mon aspirateur il y a 25 mois. Je suis membre Premium depuis 2020. Est-ce que la réparation est prise en charge ?",
+    "expected_policy": "policy_premium_extension_v1",
+    "expected_escalation": false,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I02",
+    "ticket": "Mon téléphone est tombé dans l'eau ce matin. Il ne s'allume plus. Je l'ai acheté en mars 2023. Pouvez-vous le réparer gratuitement ?",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": false,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I03",
+    "ticket": "C'est la troisième fois que je vous renvoie cette machine à café pour le même problème de fuite. Je commence à en avoir assez !",
+    "expected_policy": "procedure_escalation_sav_v1",
+    "expected_escalation": true,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I04",
+    "ticket": "Mon ordinateur portable est en réparation depuis 2 semaines. Le délai me semble long. Pouvez-vous me donner une date précise ? J'en ai besoin pour mon travail.",
+    "expected_policy": "faq_support_v1",
+    "expected_escalation": false,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I05",
+    "ticket": "Je suis client premium, mais j'ai acheté ma tablette juste avant de prendre mon abonnement. La garantie standard s'achève dans 2 mois, puis-je bénéficier de l'extension ?",
+    "expected_policy": "policy_premium_extension_v1",
+    "expected_escalation": true,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I06",
+    "ticket": "J'ai acheté mon téléviseur le 15 décembre 2021. La garantie de 24 mois est-elle applicable vu que nous sommes en 2023 ?",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": true,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I07",
+    "ticket": "Je ne suis pas d'accord avec votre diagnostic. Vous dites que j'ai mal utilisé le produit, mais c'est faux. Je refuse de payer pour la réparation.",
+    "expected_policy": "procedure_escalation_sav_v1",
+    "expected_escalation": true,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I08",
+    "ticket": "Mon abonnement Premium a expiré le mois dernier, mais mon produit acheté il y a 30 mois tombe en panne aujourd'hui. Suis-je toujours couvert ?",
+    "expected_policy": "policy_premium_extension_v1",
+    "expected_escalation": true,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I09",
+    "ticket": "Le bouton de volume de mon enceinte ne fonctionne plus du tout après seulement 6 mois. C'est inadmissible, je veux un échange immédiat !",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": true,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-I10",
+    "ticket": "J'ai perdu ma facture d'achat mais je suis client premium et j'ai acheté le produit il y a environ un an. Pouvez-vous retrouver mon dossier ?",
+    "expected_policy": "procedure_escalation_sav_v1",
+    "expected_escalation": true,
+    "complexity": "medium"
+  },
+  {
+    "id": "T-S01",
+    "ticket": "J'ai acheté mon enceinte il y a 3 mois et le son grésille. Est-ce couvert par la garantie ?",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S02",
+    "ticket": "Combien de temps dure la garantie standard pour un casque audio ?",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S03",
+    "ticket": "Ma cafetière de 2015 ne fonctionne plus. Puis-je encore utiliser la garantie ?",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S04",
+    "ticket": "Bonjour, je suis client Premium. Est-ce vrai que j'ai un an de garantie en plus ?",
+    "expected_policy": "policy_premium_extension_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S05",
+    "ticket": "J'ai fait tomber ma montre et la vitre est brisée. Est-ce que vous réparez ça gratuitement ?",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S06",
+    "ticket": "Quels sont les délais moyens pour une réparation de smartphone ?",
+    "expected_policy": "faq_support_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S07",
+    "ticket": "Mon produit est en panne. Qui définit les conditions exactes de ma garantie ?",
+    "expected_policy": "faq_support_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S08",
+    "ticket": "J'ai acheté mon robot cuisine en 2023. Est-il encore sous garantie ?",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S09",
+    "ticket": "Je viens de recevoir mon colis mais il manque un câble. Que dois-je faire ?",
+    "expected_policy": "faq_support_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
+  {
+    "id": "T-S10",
+    "ticket": "Je suis premium, mon produit a 14 mois. Suis-je bien couvert ?",
+    "expected_policy": "policy_premium_extension_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  }
+]
