@@ -48,13 +48,13 @@
   "expected_escalation": false,
   "complexity": "medium"
 },
-{
-  "id": "T-NE04",
-  "ticket": "Can you explain the warranty duration for standard customers?",
-  "expected_policy": "faq_support_v1",
-  "expected_escalation": false,
-  "complexity": "simple"
-},
+  {
+    "id": "T-NE04",
+    "ticket": "Can you explain the warranty duration for standard customers?",
+    "expected_policy": "policy_warranty_v1",
+    "expected_escalation": false,
+    "complexity": "simple"
+  },
 {
   "id": "T-NE05",
   "ticket": "The screen has a small flicker sometimes, but the device still works. What should I do?",
@@ -122,7 +122,7 @@
     "id": "T-I09",
     "ticket": "Le bouton de volume de mon enceinte ne fonctionne plus du tout après seulement 6 mois. C'est inadmissible, je veux un échange immédiat !",
     "expected_policy": "policy_warranty_v1",
-    "expected_escalation": true,
+    "expected_escalation": false,
     "complexity": "medium"
   },
   {

@@ -12,7 +12,7 @@ class TicketAnalyzer:
         self.llm = LLMClient()
         self.rag = rag_service
 
-    def analyze(self, ticket_text: str, rag_usage: bool = True) -> dict:
+    def analyze(self, ticket_text: str, use_rag: bool = True) -> dict:
         """
         Main orchestration method:
         - retrieve relevant knowledge (RAG)
@@ -21,11 +21,11 @@ class TicketAnalyzer:
         - validate response
         """
 
-        if  rag_usage:
+        if use_rag:
             # 1. Retrieve relevant documents from 
             rag_results = self.rag.search(ticket_text, k=2)
-
             context = "\n\n".join([doc["content"] for doc in rag_results])
+
         else:
             rag_results = []
             context = ""
@@ -40,7 +40,7 @@ class TicketAnalyzer:
         messages = [
             {
                 "role": "system",
-                "content": "You are a precise and reliable AI assistant for customer support decisions."
+                "content": "You are a strict AI that must always return valid JSON and nothing else."
             },
             {
                 "role": "user",
@@ -60,6 +60,7 @@ class TicketAnalyzer:
 
             result = validated_data.dict()
 
+            result["rag_enabled"] = use_rag
             result["rag_documents"] = [
                 {
                     "source": doc["source"],
