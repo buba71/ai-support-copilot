@@ -8,7 +8,7 @@ class LLMClient:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def ask(self, messages, temperature=0.2):
+    def ask(self, messages, temperature=0.2) -> dict: 
         
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
@@ -16,5 +16,9 @@ class LLMClient:
             temperature=temperature,
             response_format={"type": "json_object"}
         )
-        
-        return response.choices[0].message.content
+        return {
+            "response": response.choices[0].message.content,
+            "tokens_input": response.usage.prompt_tokens,
+            "tokens_output": response.usage.completion_tokens,
+            "model": response.model,
+        }

@@ -1,14 +1,18 @@
 import json
+import time
+
 from pydantic import ValidationError
 
 from ai_service.llm_client import LLMClient
 from ai_service.prompts import TICKET_ANALYSIS_PROMPT
 from ai_service.models import TicketAnalysis
 from ai_service.rag_service import RagService
+from ai_service.monitoring import MonitoringService
 
 
 class TicketAnalyzer:
     def __init__(self, rag_service: RagService):
+        self.monitoring = MonitoringService()
         self.llm = LLMClient()
         self.rag = rag_service
 
@@ -50,7 +54,13 @@ class TicketAnalyzer:
 
         # 3. Call LLM
 
-        raw_response = self.llm.ask(messages)
+        start = time.time()
+        llm_response = self.llm.ask(messages)
+        latency_ms = int((time.time() - start) * 1000)
+
+        raw_response = llm_response["response"]
+        tokens_input = llm_response["tokens_input"]
+        tokens_output = llm_response["tokens_output"]
 
         # 4. Parse and validate response
 
@@ -58,10 +68,9 @@ class TicketAnalyzer:
             data = json.loads(raw_response)
             validated_data = TicketAnalysis(**data)
 
-            result = validated_data.dict()
+            decision = validated_data.dict()
 
-            result["rag_enabled"] = use_rag
-            result["rag_documents"] = [
+            decision["rag_documents"] = [
                 {
                     "source": doc["source"],
                     "score": doc["score"],
@@ -69,6 +78,15 @@ class TicketAnalyzer:
                 }
                 for doc in rag_results
             ]
+
+            result = self.monitoring.enrich(
+                decision,
+                tokens_input=tokens_input,
+                tokens_output=tokens_output,
+                latency_ms=latency_ms,
+                rag_enabled=use_rag,
+                guardrail_triggered=None, # for future use_rag
+            )
 
             return result
 
