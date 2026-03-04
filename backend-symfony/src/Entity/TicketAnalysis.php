@@ -34,6 +34,18 @@ class TicketAnalysis
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $recommendedPolicy = null;
+
+    #[ORM\Column(options: ["default" => false])]
+    private bool $escalationRequired = false;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $justification = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private array $metadata = [];
+
     #[ORM\ManyToOne(inversedBy: 'ticketAnalysis')]
     private ?Ticket $ticket = null;
 
@@ -135,6 +147,50 @@ class TicketAnalysis
         return $this;
     }
 
+    public function getRecommendedPolicy(): ?string
+    {
+        return $this->recommendedPolicy;
+    }
+
+    public function setRecommendedPolicy(?string $recommendedPolicy): static
+    {
+        $this->recommendedPolicy = $recommendedPolicy;
+        return $this;
+    }
+
+    public function isEscalationRequired(): bool
+    {
+        return $this->escalationRequired;
+    }
+
+    public function setEscalationRequired(bool $escalationRequired): static
+    {
+        $this->escalationRequired = $escalationRequired;
+        return $this;
+    }
+
+    public function getJustification(): ?string
+    {
+        return $this->justification;
+    }
+
+    public function setJustification(?string $justification): static
+    {
+        $this->justification = $justification;
+        return $this;
+    }
+
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    public function setMetadata(array $metadata): static
+    {
+        $this->metadata = $metadata;
+        return $this;
+    }
+
     /**
      * @return Collection<int, TicketAiAnalysisFeedback>
      */
@@ -159,4 +215,3 @@ class TicketAnalysis
         return $this;
     }
 }
-

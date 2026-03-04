@@ -24,6 +24,11 @@ final class TicketAiAnalysisController extends AbstractController
                 'analysis' => [
                     'text' => $analysis->getSummary(),
                     'confidenceScore' => $analysis->getScore(),
+                    'category' => $analysis->getCategory(),
+                    'urgency' => $analysis->getUrgency(),
+                    'recommendedPolicy' => $analysis->getRecommendedPolicy(),
+                    'escalationRequired' => $analysis->isEscalationRequired(),
+                    'justification' => $analysis->getJustification(),
                 ],
                 'sources' => array_map(function($source) {
                     // Adapt source format if needed. 

@@ -18,6 +18,20 @@ final readonly class AnalyseTicket
 
     /**
      * @param string $ticketContent
+     * @return array
+     */
+    public function getRawAnalysis(string $ticketContent): array
+    {
+        $rawData = $this->aiClient->analyse($ticketContent);
+        $result = AnalyseTicketResult::fromArray($rawData);
+
+        $this->persistAnalysis($ticketContent, $result);
+
+        return $rawData;
+    }
+
+    /**
+     * @param string $ticketContent
      * @return AnalyseTicketResult
      */
     public function execute(string $ticketContent): AnalyseTicketResult
@@ -25,6 +39,13 @@ final readonly class AnalyseTicket
         $rawData = $this->aiClient->analyse($ticketContent);
         $result = AnalyseTicketResult::fromArray($rawData);
 
+        $this->persistAnalysis($ticketContent, $result);
+
+        return $result;
+    }
+
+    private function persistAnalysis(string $ticketContent, AnalyseTicketResult $result): void
+    {
         $ticket = new Ticket();
         $ticket->setContent($ticketContent);
 
@@ -37,11 +58,14 @@ final readonly class AnalyseTicket
         $ticketAnalysis->setSources($result->sources);
         $ticketAnalysis->setCreatedAt(new \DateTime());
         
+        // New fields
+        $ticketAnalysis->setRecommendedPolicy($result->recommendedPolicy);
+        $ticketAnalysis->setEscalationRequired($result->escalationRequired);
+        $ticketAnalysis->setJustification($result->justification);
+        $ticketAnalysis->setMetadata($result->meta);
 
         $this->entityManager->persist($ticket);
         $this->entityManager->persist($ticketAnalysis);
         $this->entityManager->flush();
-
-        return $result;
     }
 }

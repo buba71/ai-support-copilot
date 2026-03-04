@@ -25,14 +25,9 @@ final class AnalyseTicketController extends AbstractController
                 return $this->json(['error' => 'Le contenu du ticket ne peut pas être vide'], 400);
             }
             
-            $result = $analyseTicket->execute($content);
+            $rawData = $analyseTicket->getRawAnalysis($content);
 
-            return $this->json([
-                'summary' => $result->summary,
-                'category' => $result->category,
-                'urgency' => $result->urgency,
-                'sources' => $result->sources,
-            ]);
+            return $this->json($rawData);
         } catch (\RuntimeException $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         } catch (\Exception $e) {

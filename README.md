@@ -269,13 +269,13 @@ ai-support-copilot/
 │           └── index.html.twig
 │
 └── ai-engine/                # Service IA Python
-    ├── api/
-    │   └── main.py           # Application FastAPI
-    ├── ai_service/
-    │   ├── ticket_analyser.py
-    │   ├── rag_service.py
-    │   └── llm_client.py
-    └── rag_docs/             # Base de connaissances
+    ├── api/                  # Endpoints FastAPI
+    ├── ai_service/           # Logique orchestration IA
+    │   ├── guardrails/       # Moteur de règles de sécurité
+    │   ├── monitoring/       # Tracking tokens, coûts, latence
+    │   ├── prompts.py        # Templates de prompts versionnés
+    │   └── ticket_analyser.py
+    └── rag_docs/             # Base de connaissances (PDF/Markdown)
 ```
 
 ## 🔌 Points d'API
@@ -285,13 +285,13 @@ ai-support-copilot/
 - `GET /` : Page d'accueil avec l'interface d'analyse
 - `POST /api/ticket/analyse` : Analyse un ticket client
   - Body : `{ "ticket": "contenu du ticket" }`
-  - Response : `{ "summary": "...", "category": "...", "urgency": "...", "sources": [...] }`
+  - Response : `{ "decision": {...}, "meta": {...} }`
 
 ### Service IA (FastAPI)
 
 - `POST /analyze-ticket` : Analyse un ticket avec l'IA
   - Body : `{ "ticket": "contenu du ticket" }`
-  - Response : Résultat de l'analyse enrichie par RAG
+  - Response : `{ "decision": {...}, "meta": {...} }` (Inclus résumé, catégorie, urgence, sources RAG et métadonnées de monitoring)
 
 ## 🛠️ Commandes utiles
 
@@ -330,6 +330,22 @@ venv\Scripts\activate     # Windows
 # Démarrer le serveur
 uvicorn api.main:app --reload --port 8000
 ```
+
+## 🛡️ Observability & Guardrails
+
+L'**AI Engine** intègre une couche robuste de monitoring et de sécurité pour garantir la fiabilité des analyses :
+
+- **Decision / Meta separation** : Chaque réponse de l'API est structurée en deux blocs distincts :
+  - `decision` : Contient les données métier validées par Pydantic (`summary`, `category`, `urgency`, `recommended_policy`, `escalation_required`, `justification`).
+  - `meta` : Regroupe les métadonnées techniques (`model`, `prompt_version`, `latency_ms`, `tokens_input`, `tokens_output`, `estimated_cost`, `guardrail_triggered`).
+- **Prompt versioning** : Versionnement strict via la variable `AI_PROMPT_VERSION` (actuellement `2.0_decision_engine`). Chaque analyse est tracée avec la version exacte du prompt utilisée, permettant un suivi précis des évolutions de performance.
+- **Guardrail engine** : Un moteur de règles déterministes (`GuardrailEngine`) intervient en post-traitement pour corriger les hallucinations ou erreurs de logique de l'IA :
+  - **GR-001** : Force `escalation_required` à `true` si l'urgence est `high`.
+  - **GR-002** : Détection de mots-clés juridiques pour forcer l'escalade manuelle.
+  - **GR-003** : Interdit l'utilisation de la politique FAQ pour les cas critiques, redirigeant vers une procédure d'escalade.
+- **Token & cost tracking** : Calcul en temps réel basé sur les tarifs du modèle (ex: `$0.15/1M` tokens en entrée, `$0.60/1M` en sortie pour `gpt-4o-mini`).
+- **Latency measurement** : Mesure précise de la latence de bout en bout (orchestration LLM + recherche RAG) renvoyée en millisecondes.
+- **Evaluation Metrics** : Le projet inclut un système d'évaluation (`EvaluationMetrics`) pour calculer la précision des politiques recommandées, le taux d'escalade correct et le taux d'erreur global sur des datasets de test.
 
 ## 📝 Notes de développement
 

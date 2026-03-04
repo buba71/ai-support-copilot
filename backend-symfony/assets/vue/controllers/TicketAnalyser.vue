@@ -18,6 +18,7 @@
     <p v-if="error" class="error-message">{{ error }}</p>
 
     <div v-if="result" class="result-box">
+      {{ result }}
       <p><strong>Résumé :</strong> {{ result.summary }}</p>
       <p><strong>Catégorie :</strong> {{ result.category }}</p>
       <p><strong>Urgence :</strong> {{ result.urgency }}</p>
@@ -60,7 +61,8 @@ const analyzeTicket = async () => {
       throw new Error(errorData.error || `Erreur HTTP: ${response.status}`)
     }
 
-    result.value = await response.json()
+    const data = await response.json()
+    result.value = data.decision || data
 
   } catch (e) {
     error.value = e.message
