@@ -7,16 +7,18 @@ class EvaluationMetrics:
         self.errors = 0
 
     def update(self, expected_policy, expected_escalation, result):
+
+        decision = result.get("decision", {})
         self.total += 1
 
         if "error" in result:
             self.errors += 1
             return
 
-        if result["recommended_policy"] == expected_policy:
+        if decision.get("recommended_policy") == expected_policy:
             self.policy_correct += 1
 
-        if result["escalation_required"] == expected_escalation:
+        if decision.get("escalation_required") == expected_escalation:
             self.escalation_correct += 1
 
     def summary(self):

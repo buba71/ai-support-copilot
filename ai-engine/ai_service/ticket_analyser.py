@@ -8,6 +8,7 @@ from ai_service.prompts import TICKET_ANALYSIS_PROMPT
 from ai_service.models import TicketAnalysis
 from ai_service.rag_service import RagService
 from ai_service.monitoring import MonitoringService
+from ai_service.guardrails import GuardrailEngine
 
 
 class TicketAnalyzer:
@@ -15,6 +16,7 @@ class TicketAnalyzer:
         self.monitoring = MonitoringService()
         self.llm = LLMClient()
         self.rag = rag_service
+        self.guardrail = GuardrailEngine()
 
     def analyze(self, ticket_text: str, use_rag: bool = True) -> dict:
         """
@@ -54,9 +56,9 @@ class TicketAnalyzer:
 
         # 3. Call LLM
 
-        start = time.time()
+        start = time.time() # start time in seconds 
         llm_response = self.llm.ask(messages)
-        latency_ms = int((time.time() - start) * 1000)
+        latency_ms = int((time.time() - start) * 1000) # latency in milliseconds
 
         raw_response = llm_response["response"]
         tokens_input = llm_response["tokens_input"]
@@ -69,6 +71,13 @@ class TicketAnalyzer:
             validated_data = TicketAnalysis(**data)
 
             decision = validated_data.dict()
+
+            # 5. Apply safety guardrails (logic-based corrections)
+            # Uses tuple unpacking (similar to list() in PHP) to get the updated decision and trigger status
+            decision, guardrail_triggered = self.guardrail.apply(
+                decision,
+                ticket_text
+            )
 
             decision["rag_documents"] = [
                 {
@@ -85,7 +94,7 @@ class TicketAnalyzer:
                 tokens_output=tokens_output,
                 latency_ms=latency_ms,
                 rag_enabled=use_rag,
-                guardrail_triggered=None, # for future use_rag
+                guardrail_triggered=guardrail_triggered, # for future use_rag
             )
 
             return result

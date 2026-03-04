@@ -8,6 +8,7 @@ class MonitoringService:
   VERSION = os.getenv("AI_MONITORING_VERSION")
   AI_MODEL_NAME = os.getenv("AI_MODEL_NAME", "unknown")
   AI_PROMPT_VERSION = os.getenv("AI_PROMPT_VERSION", "unknown")
+  AI_GUARDRAIL_VERSION = os.getenv("AI_GUARDRAIL_VERSION", "unknown")
 
   # Prix par million de tokens (ex: gpt-4o-mini)
   COST_INPUT_PER_1M: float = 0.15
@@ -38,6 +39,7 @@ class MonitoringService:
             "model": self.AI_MODEL_NAME,
             "prompt_version": self.AI_PROMPT_VERSION,
             "monitoring_version": self.VERSION,
+            "guardrail_version": self.AI_GUARDRAIL_VERSION,
             "tokens_input": tokens_input,
             "tokens_output": tokens_output,
             "estimated_cost": self.estimate_cost(tokens_input, tokens_output),
