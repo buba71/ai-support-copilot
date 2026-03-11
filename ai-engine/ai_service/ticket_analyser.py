@@ -29,7 +29,7 @@ class TicketAnalyzer:
 
         if use_rag:
             # 1. Retrieve relevant documents from 
-            rag_results = self.rag.search(ticket_text, k=2)
+            rag_results = self.rag.search(ticket_text, k=4)
             context = "\n\n".join([doc["content"] for doc in rag_results])
 
         else:

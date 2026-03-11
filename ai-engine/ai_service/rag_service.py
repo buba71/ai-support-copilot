@@ -13,15 +13,21 @@ class RagService:
         - source
         - score
         """
-        results = self.vector_db.search(query, k=k)
+        candidates = self.vector_db.search(query, k=8)
+
+        print(candidates)
 
         enriched_results = []
-        for item in results:
+        for item in candidates:
             enriched_results.append({
                 "content": item["content"],
                 "source": item["metadata"].get("source"),
                 "score": round(1 - item["distance"], 3) # score = 1 - distance (plus proche = plus haut score)
             })
+        
+        # Sort by score
+        enriched_results.sort(key=lambda x: x["score"], reverse=True)
 
-        return enriched_results
+        # Take top k
+        return enriched_results[:int(k)]
 
