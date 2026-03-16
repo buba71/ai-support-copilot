@@ -33,6 +33,7 @@ class MonitoringService:
         latency_ms: int,
         rag_enabled: bool,
         guardrail_triggered: str | None,
+        cache_hit: bool,
     ) -> dict:
 
         meta = {
@@ -46,6 +47,7 @@ class MonitoringService:
             "latency_ms": latency_ms,
             "rag_enabled": rag_enabled,
             "guardrail_triggered": guardrail_triggered,
+            "cache_hit": cache_hit,
         }
 
         return {
