@@ -9,7 +9,6 @@ class RetryService:
     """
 
     def __init__(self, max_retries: int = 3, delay: float = 1.0):
-
         self.max_retries = max_retries
         self.delay = delay
 
@@ -68,5 +67,7 @@ class RetryService:
                 if attempt == self.max_retries - 1:
                     raise
 
+                delay = self.delay * (2 ** attempt) # Exponential backoff   
+
                 # Wait for the specified delay before the next attempt
-                time.sleep(self.delay)
+                time.sleep(delay)
