@@ -26,6 +26,77 @@ graph TD
 ### Inter-Service Communication
 The Symfony backend communicates with the AI Engine via a REST API. The endpoint is configured in `backend-symfony/config/services.yaml` under the parameter `ai_engine.endpoint` (default: `http://localhost:8000/analyze-ticket`).
 
+### Asynchronous Queue & Worker System (AI Engine)
+To prevent long-running AI tasks from blocking the main API, the project implements an asynchronous queue system using **Redis Queue (RQ)**:
+
+1. **Redis Server**: Acts as the message broker (`localhost:6379`).
+2. **QueueService**: Enqueues new AI tasks (like `ticket-analysis`) and immediately returns a `job_id` to the caller.
+3. **RQ Worker**: Runs in the background (via `rq worker ticket-analysis`), continuously polling the queue to execute heavy AI tasks (RAG + LLM analysis).
+
+```mermaid
+sequenceDiagram
+    actor Client as Application / API
+    participant QS as QueueService
+    participant Redis as Redis (Database)
+    participant Worker as RQ Worker (ticket-analysis)
+    participant Analyzer as TicketAnalyzer (RAG + LLM)
+
+    Client->>QS: enqueue_ticket("Ticket content")
+    QS->>Redis: Adds job to "ticket-analysis" queue
+    Redis-->>QS: Returns job_id
+    QS-->>Client: Returns job_id (API responds immediately)
+
+    Note over Worker, Redis: Background Processing
+    Worker->>Redis: Pops pending job from queue
+    Worker->>Analyzer: Runs heavy analysis task
+    Analyzer-->>Worker: Analysis result
+    Worker->>Redis: Saves the result under the job_id
+
+    Note over Client, Redis: Result Retrieval
+    Client->>Redis: Fetches result using job_id
+    Redis-->>Client: Returns the analysis result
+```
+
+#### 🧪 Testing the Queue System Locally
+You can test the queue and worker sequentially using 4 separate terminal tabs, assuming a fresh start:
+
+**Terminal 1: Start the Database (Redis & Postgres)**
+Assuming your Redis server is managed by the Docker Compose file:
+```bash
+cd backend-symfony
+docker compose up -d
+```
+*(If you run Redis directly on your machine, use `sudo systemctl start redis` or `redis-server`)*.
+
+**Terminal 2: Start the AI API (FastAPI)**
+```bash
+cd ai-engine
+# Activate your virtual environment first
+source venv/bin/activate  
+# Start the server
+uvicorn api.main:app --reload --port 8000
+```
+
+**Terminal 3: Start the RQ Worker (Background Jobs)**
+This terminal needs to be dedicated entirely to the worker so it can listen for incoming tickets in the queue.
+```bash
+cd ai-engine
+source venv/bin/activate  
+rq worker ticket-analysis
+```
+
+**Terminal 4: Run the Test Script**
+Now that the API, the Database, and the Worker are all listening, trigger the test script:
+```bash
+cd ai-engine
+source venv/bin/activate  
+python test_queue.py
+```
+
+**Verification**:
+- In **Terminal 4**: You will instantly see a `job_id` printed (e.g., `cf9a2...`) and the script finishes right away.
+- In **Terminal 3**: You will instantly see the worker pick up the mock ticket (`"My product is broken"`) and execute the long RAG/LLM analysis process!
+
 ---
 
 ## ⚙️ Configuration (Environment Variables)

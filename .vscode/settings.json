@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/ai-engine/myenv/bin/python",
+  "python.envFile": "${workspaceFolder}/ai-engine/.env",
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/ai-engine"
+  }
+}
