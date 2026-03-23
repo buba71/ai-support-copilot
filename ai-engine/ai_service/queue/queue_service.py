@@ -21,7 +21,8 @@ class QueueService:
 
         job = self.queue.enqueue(
             "ai_service.queue.worker.process_ticket",
-            ticket_text
+            ticket_text,
+            result_ttl=3600 
         )
 
         return job.id

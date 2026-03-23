@@ -4,4 +4,4 @@ queue = QueueService()
 
 job_id = queue.enqueue_ticket("My product is broken")
 
-print(job_id)
+print(f"Job ID: {job_id}")
