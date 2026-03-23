@@ -57,6 +57,22 @@ sequenceDiagram
     Redis-->>Client: Returns the analysis result
 ```
 
+#### 🔄 Job Lifecycle & Consumption
+
+```mermaid
+flowchart LR
+    A([New Ticket]) -->|1. Enqueue| B[(Redis Queue<br/>'ticket-analysis')]
+    B -->|2. Pop| C{Worker Free?}
+    C -->|Yes| D[3. Execution<br/>RAG + LLM]
+    D -->|4. Save Result| E[(Redis Key<br/>rq:job:id)]
+    E -.->|TTL 500s expires| F([Auto-delete<br/>Free Memory])
+```
+
+1. **Enqueue**: The `QueueService` pushes the ticket into the Redis list (`rq:queue:ticket-analysis`).
+2. **Dequeue (Pop)**: An available RQ Worker pops the ticket from the queue, meaning it is **consumed** and no longer waiting.
+3. **Execution**: The worker runs the heavy AI analysis.
+4. **Result Storage & TTL**: The return value is stored in Redis under a specific job key (e.g., `rq:job:<job_id>`). By default, RQ keeps this successful result for **500 seconds** (Time To Live) to allow the client to retrieve it. After this delay, Redis automatically deletes the result to prevent memory saturation.
+
 #### 🧪 Testing the Queue System Locally
 You can test the queue and worker sequentially using 4 separate terminal tabs, assuming a fresh start:
 
