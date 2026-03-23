@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+openai
+chromadb
+redis
+rq
+python-dotenv
+numpy
+pytest

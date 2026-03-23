@@ -44,3 +44,52 @@ sequenceDiagram
     Client->>Redis: Checks status/result for job_id
     Redis-->>Client: Returns the analysis result
 ```
+
+### 🧠 Internal AI Analysis Pipeline
+When the worker executes the `TicketAnalyzer`, several layers are involved to ensure efficiency and safety:
+
+```mermaid
+sequenceDiagram
+    participant Worker as RQ Worker
+    participant Analyzer as TicketAnalyzer
+    participant Cache as LLM Cache
+    participant RAG as RAG Service
+    participant LLM as LLM Client
+    participant GR as Guardrail Engine
+    participant Mon as Monitoring Service
+
+    Worker->>Analyzer: analyze(text)
+    
+    rect rgb(240, 240, 240)
+    Note over Analyzer, Cache: Optimization & Safety layers
+    Analyzer->>Cache: get(prompt_hash)
+    alt Cache Hit
+        Cache-->>Analyzer: Return cached result
+        Analyzer-->>Worker: Immediate response (latency: 0ms)
+    else Cache Miss
+        Analyzer->>RAG: search(text)
+        RAG-->>Analyzer: context documents
+        
+        Analyzer->>LLM: ask(prompt)
+        Note right of LLM: Includes Exponential Backoff Retry
+        LLM-->>Analyzer: raw response + tokens
+        
+        Analyzer->>GR: apply(decision, text)
+        Note right of GR: Deterministic Safety Rules
+        GR-->>Analyzer: safe decision + triggers
+        
+        Analyzer->>Mon: enrich(result)
+        Note right of Mon: Cost estimation & Metadata
+        Mon-->>Analyzer: final result
+        
+        Analyzer->>Cache: set(prompt_hash, result)
+        Analyzer-->>Worker: final result
+    end
+    end
+```
+
+### ✨ New AI Engine Features
+- **LLM Caching**: SHA-256 based in-memory cache for prompt results.
+- **Monitoring Service**: Token counting and estimated cost calculation.
+- **Guardrail Engine**: Deterministic rules applied post-LLM (Urgency & Legal checks).
+- **Retry Service**: Automatic retry with exponential backoff for API resilience.
