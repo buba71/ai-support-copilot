@@ -1,16 +1,13 @@
 import redis
-from rq import Queue
+from ai_service.queue.redis_connection import get_redis_connection
+from rq import Queue, Retry
 
 
 class QueueService:
 
     def __init__(self):
 
-        self.redis_conn = redis.Redis(
-            host="localhost",
-            port=6379,
-            db=0
-        )
+        self.redis_conn = get_redis_connection() 
 
         self.queue = Queue(
             "ticket-analysis",
@@ -22,7 +19,8 @@ class QueueService:
         job = self.queue.enqueue(
             "ai_service.queue.worker.process_ticket",
             ticket_text,
-            result_ttl=3600 
+            result_ttl=3600,
+            retry=Retry(max=3, interval=[10, 30, 60]) # Retry up to 3 times with exponential backoff    
         )
 
         return job.id

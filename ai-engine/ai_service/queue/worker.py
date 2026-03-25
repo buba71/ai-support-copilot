@@ -1,11 +1,24 @@
 from ai_service.rag_service import RagService
 from ai_service.ticket_analyser import TicketAnalyzer
+from ai_service.queue.retryableJobError import RetryableJobError
+from ai_service.queue.nonRetryableJobError import NonRetryableJobError
 
 
 def process_ticket(ticket_text: str):
 
     rag_service = RagService()
     analyzer = TicketAnalyzer(rag_service)
+
     result = analyzer.analyze(ticket_text)
 
+    if "error" in result:
+        error_message = result["error"]
+
+        if "Invalid response from LLM client - response was not valid JSON" in error_message:
+            raise NonRetryableJobError(error_message)
+        else:
+            raise RetryableJobError(error_message)
+
     return result
+
+ 

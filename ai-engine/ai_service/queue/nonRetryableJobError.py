@@ -1,0 +1,2 @@
+class NonRetryableJobError(Exception):
+    pass
