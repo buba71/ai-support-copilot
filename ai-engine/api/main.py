@@ -1,24 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from ai_service.ticket_analyser import TicketAnalyzer
-from ai_service.rag_service import RagService
-from ai_service.doc_loader import load_docs
 from ai_service.queue.queue_service import QueueService
 from rq.job import Job
 import redis
 
-# 1. Load knowledge base at startup (optional if persistent)
-# documents = load_docs("rag_docs")
-
-rag = RagService()
 queue = QueueService()
-
-redis_conn = queue.redis_conn
-
-
 app = FastAPI()
-analyzer = TicketAnalyzer(rag)
 
 class TicketRequest(BaseModel):
     ticket: str
