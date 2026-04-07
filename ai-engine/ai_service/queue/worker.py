@@ -1,13 +1,10 @@
-from ai_service.rag_service import RagService
-from ai_service.ticket_analyser import TicketAnalyzer
+from ai_service.service_factory import get_ticket_analyzer
 from ai_service.queue.retryableJobError import RetryableJobError
 from ai_service.queue.nonRetryableJobError import NonRetryableJobError
 
+analyzer = get_ticket_analyzer()
 
 def process_ticket(ticket_text: str):
-
-    rag_service = RagService()
-    analyzer = TicketAnalyzer(rag_service)
 
     result = analyzer.analyze(ticket_text)
 

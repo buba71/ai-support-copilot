@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from ai_service.vector_db import VectorDB
+from ai_service.infrastructure.vector_db import VectorDB
 
 RAG_DOCS_DIR = Path(__file__).resolve().parent.parent / "rag_docs"
 

@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from ai_service.vector_db import VectorDB
+from ai_service.infrastructure.vector_db import VectorDB
 
 class RagService:
     def __init__(self):
@@ -14,8 +14,6 @@ class RagService:
         - score
         """
         candidates = self.vector_db.search(query, k=8)
-
-        print(candidates)
 
         enriched_results = []
         for item in candidates:

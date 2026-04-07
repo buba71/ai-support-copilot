@@ -110,7 +110,7 @@ if __name__ == "__main__":
     """
     Test manuel isolé de la vector DB.
     À lancer depuis ai-engine :
-        python -m ai_service.vector_db
+        python -m ai_service.infrastructure.vector_db
     """
 
     db = VectorDB()

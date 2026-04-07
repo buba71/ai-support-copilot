@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from ai_service.ticket_analyser import TicketAnalyzer
 from ai_service.rag_service import RagService
-from ai_service.doc_loader import load_docs
+from ai_service.infrastructure.doc_loader import load_docs
 
 # 1. Load knowledge base at startup (optional if persistent)
 # documents = load_docs("rag_docs")

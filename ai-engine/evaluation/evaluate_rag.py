@@ -1,6 +1,5 @@
 import json
-from ai_service.rag_service import RagService
-from ai_service.ticket_analyser import TicketAnalyzer
+from ai_service.service_factory import get_ticket_analyzer
 from evaluation.metrics import EvaluationMetrics
 
 
@@ -10,8 +9,7 @@ def load_dataset():
 
 
 def run_evaluation(use_rag: bool):
-    rag_service = RagService()
-    analyzer = TicketAnalyzer(rag_service)
+    analyzer = get_ticket_analyzer()
     dataset = load_dataset()
 
     metrics = EvaluationMetrics()
