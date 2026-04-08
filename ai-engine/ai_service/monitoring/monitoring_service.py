@@ -10,18 +10,18 @@ class MonitoringService:
   AI_PROMPT_VERSION = os.getenv("AI_PROMPT_VERSION", "unknown")
   AI_GUARDRAIL_VERSION = os.getenv("AI_GUARDRAIL_VERSION", "unknown")
 
-  # Prix par million de tokens (ex: gpt-4o-mini)
+  # Price per million tokens (e.g. gpt-4o-mini)
   COST_INPUT_PER_1M: float = 0.15
   COST_OUTPUT_PER_1M: float = 0.60
 
   def estimate_cost(self, tokens_input: int, tokens_output: int) -> float:
-    # Coût en dollars: (tokens / 1 000 000) * prix_par_million
+    # Cost in dollars: (tokens / 1,000,000) * price_per_million
     input_cost: float = (tokens_input / 1_000_000) * self.COST_INPUT_PER_1M
     output_cost: float = (tokens_output / 1_000_000) * self.COST_OUTPUT_PER_1M
     
     total_cost: float = input_cost + output_cost
-    # On arrondit pour éviter les erreurs de virgule flottante
-    # 10 décimales permettent de conserver la précision (0.15/1M = 0.00000015)
+    # Round to avoid floating point errors
+    # 10 decimals allow keeping precision (0.15/1M = 0.00000015)
     return round(total_cost, 10)
 
   def enrich(
