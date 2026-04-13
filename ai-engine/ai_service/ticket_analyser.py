@@ -10,6 +10,9 @@ from ai_service.rag_service import RagService
 from ai_service.monitoring import MonitoringService
 from ai_service.guardrails import GuardrailEngine
 from ai_service.cache.llm_cache_service import LLMCacheService
+from ai_service.core.logging.config import get_logger
+
+logger = get_logger(__name__)
 
 
 class TicketAnalyzer:
@@ -32,6 +35,7 @@ class TicketAnalyzer:
         Main orchestration method using specialized private methods.
         """
         # 1. Context Retrieval
+        logger.info("[TECH] analyze_start use_rag=%s", use_rag)
         rag_results, context = self._get_context(ticket_text, use_rag)
 
         # 2. Prompt Building
@@ -53,8 +57,16 @@ class TicketAnalyzer:
             return self._format_cache_hit(cached_response)
 
         start = time.time()
+        logger.info("[TECH] cache_miss")
+        logger.info("[TECH] llm_call_start")
         llm_response = self.llm.ask(messages)
         latency_ms = int((time.time() - start) * 1000)
+        logger.info(
+            "[TECH] llm_call_end latency_ms=%s tokens_input=%s tokens_output=%s",
+            latency_ms,
+            tokens_input,
+            tokens_output
+        )
 
         raw_response = llm_response.response
         tokens_input = llm_response.tokens_input
@@ -67,6 +79,12 @@ class TicketAnalyzer:
 
         # 5. Post-process (Guardrails & RAG Docs)
         decision, guardrail_triggered = self._post_process(parsed_data, ticket_text, rag_results)
+        logger.info(
+            "[BUSINESS] category=%s priority=%s guardrail_triggered=%s",
+            decision["category"],
+            decision["priority"],
+            guardrail_triggered
+        )
 
         # 6. Final Enrichment & Cache
         result = self.monitoring.enrich(
@@ -82,7 +100,7 @@ class TicketAnalyzer:
         self.cache.set(prompt, result)
         return result
 
-    def _get_context(self, ticket_text: str, use_rag: bool) -> tuple:
+    def _get_context(self, ticket_text: str, use_rag: bool) -> tuple[list, str]:
         if use_rag:
             rag_results = self.rag.search(ticket_text, k=4)
             context = "\n\n".join([doc.content for doc in rag_results])
@@ -96,6 +114,7 @@ class TicketAnalyzer:
         )
 
     def _format_cache_hit(self, cached_response: dict) -> dict:
+        logger.info("[TECH] cache_hit")
         result = cached_response.copy()
         result["meta"] = cached_response["meta"].copy()
         result["meta"].update({
@@ -107,25 +126,29 @@ class TicketAnalyzer:
         })
         return result
 
-    def _parse_and_validate(self, raw_response: str) -> tuple:
+    def _parse_and_validate(self, raw_response: str) -> tuple[dict | None, dict | None]:
         try:
             data = json.loads(raw_response)
             validated_data = TicketAnalysis(**data)
             return validated_data.dict(), None
         except json.JSONDecodeError:
+            logger.error("[TECH] invalid_json_from_llm")
             return None, {
                 "error": "Invalid response from LLM client - response was not valid JSON",
                 "raw_response": raw_response[:500]
             }
         except ValidationError as e:
+            logger.error("[TECH] invalid_schema_from_llm")
             return None, {
                 "error": "INVALID_SCHEMA",
                 "details": e.errors(),
                 "raw_response": raw_response[:500]
             }
 
-    def _post_process(self, decision: dict, ticket_text: str, rag_results: list) -> tuple:
+    def _post_process(self, decision: dict, ticket_text: str, rag_results: list) -> tuple[dict, bool]:
         updated_decision, triggered = self.guardrail.apply(decision, ticket_text)
+        logger.info("[BUSINESS] guardrail_triggered=%s", triggered)
+            
 
         updated_decision["rag_documents"] = [
             {

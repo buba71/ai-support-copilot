@@ -178,3 +178,23 @@ Contrat :
 ### LLMClientInterface
 Contrat :
 - ask(messages: list[dict], temperature: float = 0.2) -> LLMResponse
+
+## Logging strategy
+
+Deux catégories de logs sont prévues :
+
+### TECH
+Pour les événements d’exécution :
+- cache hit / miss
+- retry
+- timeout
+- invalid JSON
+- invalid schema
+
+### BUSINESS
+Pour les événements de décision :
+- catégorie détectée
+- priorité
+- guardrail déclenché
+- fallback
+- contexte insuffisant
