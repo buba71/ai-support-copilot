@@ -56,9 +56,9 @@ class TicketAnalyzer:
         llm_response = self.llm.ask(messages)
         latency_ms = int((time.time() - start) * 1000)
 
-        raw_response = llm_response["response"]
-        tokens_input = llm_response["tokens_input"]
-        tokens_output = llm_response["tokens_output"]
+        raw_response = llm_response.response
+        tokens_input = llm_response.tokens_input
+        tokens_output = llm_response.tokens_output
 
         # 4. Parse and Validate
         parsed_data, error_response = self._parse_and_validate(raw_response)
@@ -85,7 +85,7 @@ class TicketAnalyzer:
     def _get_context(self, ticket_text: str, use_rag: bool) -> tuple:
         if use_rag:
             rag_results = self.rag.search(ticket_text, k=4)
-            context = "\n\n".join([doc["content"] for doc in rag_results])
+            context = "\n\n".join([doc.content for doc in rag_results])
             return rag_results, context
         return [], ""
 
@@ -126,12 +126,12 @@ class TicketAnalyzer:
 
     def _post_process(self, decision: dict, ticket_text: str, rag_results: list) -> tuple:
         updated_decision, triggered = self.guardrail.apply(decision, ticket_text)
-        
+
         updated_decision["rag_documents"] = [
             {
-                "source": doc["source"],
-                "score": doc["score"],
-                "excerpt": doc["content"][:500]
+                "source": doc.source,
+                "score": doc.score,
+                "excerpt": doc.content[:500]
             }
             for doc in rag_results
         ]

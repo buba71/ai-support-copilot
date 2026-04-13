@@ -154,3 +154,27 @@ Le module encapsule correctement l’accès à la base vectorielle, mais ses for
 
 Remarque :
 Le module encapsule correctement l’appel au modèle, mais ses paramètres critiques restent hardcodés et son contrat d’entrée/sortie gagnerait à être typé plus explicitement.
+
+## Interfaces figées (Sprint 1)
+
+### RetrievedChunk
+Schéma de sortie standard pour le retrieval :
+- content: str
+- source: str
+- score: float | None
+- metadata: dict
+
+### LLMResponse
+Schéma de sortie standard pour les appels LLM :
+- response: str
+- tokens_input: int
+- tokens_output: int
+- model: str
+
+### RagServiceInterface
+Contrat :
+- search(query: str, k: int = 2) -> list[RetrievedChunk]
+
+### LLMClientInterface
+Contrat :
+- ask(messages: list[dict], temperature: float = 0.2) -> LLMResponse
