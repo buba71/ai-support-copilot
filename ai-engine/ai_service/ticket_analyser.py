@@ -60,6 +60,10 @@ class TicketAnalyzer:
         logger.info("[TECH] cache_miss")
         logger.info("[TECH] llm_call_start")
         llm_response = self.llm.ask(messages)
+        raw_response = llm_response.response
+        tokens_input = llm_response.tokens_input
+        tokens_output = llm_response.tokens_output
+
         latency_ms = int((time.time() - start) * 1000)
         logger.info(
             "[TECH] llm_call_end latency_ms=%s tokens_input=%s tokens_output=%s",
@@ -67,10 +71,6 @@ class TicketAnalyzer:
             tokens_input,
             tokens_output
         )
-
-        raw_response = llm_response.response
-        tokens_input = llm_response.tokens_input
-        tokens_output = llm_response.tokens_output
 
         # 4. Parse and Validate
         parsed_data, error_response = self._parse_and_validate(raw_response)
@@ -94,7 +94,8 @@ class TicketAnalyzer:
             latency_ms=latency_ms,
             rag_enabled=use_rag,
             guardrail_triggered=guardrail_triggered,
-            cache_hit=False
+            cache_hit=False,
+            retriever_name=self.rag.get_retriever_name()
         )
 
         self.cache.set(prompt, result)

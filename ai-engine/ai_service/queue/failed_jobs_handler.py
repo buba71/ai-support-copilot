@@ -2,8 +2,7 @@ from rq import Queue
 from rq.registry import FailedJobRegistry
 
 from ai_service.dlq.dlq_service import DLQService
-from ai_service.queue.redis_connection import get_redis_connection
-
+from ai_service.infrastructure.redis_connection import get_redis_connection
 
 def move_failed_jobs_to_dlq(queue_name: str = "ticket-analysis"):
     redis_conn = get_redis_connection()

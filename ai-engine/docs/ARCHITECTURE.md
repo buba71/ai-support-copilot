@@ -198,3 +198,23 @@ Pour les événements de décision :
 - guardrail déclenché
 - fallback
 - contexte insuffisant
+
+## Retrieval architecture
+
+Le retrieval est maintenant séparé en deux niveaux :
+
+### RagService
+Responsable :
+- exposer une interface stable au reste du pipeline
+
+### BaseRetriever
+Contrat :
+- retrieve(query: str, k: int) -> list[RetrievedChunk]
+
+### ChromaRetriever
+Responsable :
+- implémenter le retrieval concret avec VectorDB / Chroma
+
+Objectif :
+- pouvoir remplacer l’implémentation sans casser TicketAnalyzer
+- préparer LlamaIndex et les benchmarks

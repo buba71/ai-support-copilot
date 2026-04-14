@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Literal
 
-
 class TicketAnalysis(BaseModel):
     summary: str = Field(
         ...,

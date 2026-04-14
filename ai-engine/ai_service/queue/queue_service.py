@@ -1,5 +1,5 @@
 import redis
-from ai_service.queue.redis_connection import get_redis_connection
+from ai_service.infrastructure.redis_connection import get_redis_connection
 from rq import Queue, Retry
 
 

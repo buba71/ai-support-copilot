@@ -1,15 +1,17 @@
 import os 
 from dotenv import load_dotenv
+from ai_service.config.versioning import (
+    MODEL_NAME,
+    PROMPT_VERSION,
+    GUARDRAIL_VERSION,
+    MONITORING_VERSION,
+    RETRIEVER_VERSION,
+    SCHEMA_VERSION,
+)
 
 load_dotenv()
 
 class MonitoringService:
-
-  VERSION = os.getenv("AI_MONITORING_VERSION")
-  AI_MODEL_NAME = os.getenv("AI_MODEL_NAME", "unknown")
-  AI_PROMPT_VERSION = os.getenv("AI_PROMPT_VERSION", "unknown")
-  AI_GUARDRAIL_VERSION = os.getenv("AI_GUARDRAIL_VERSION", "unknown")
-
   # Price per million tokens (e.g. gpt-4o-mini)
   COST_INPUT_PER_1M: float = 0.15
   COST_OUTPUT_PER_1M: float = 0.60
@@ -34,13 +36,16 @@ class MonitoringService:
         rag_enabled: bool,
         guardrail_triggered: str | None,
         cache_hit: bool,
+        retriever_name: str,
     ) -> dict:
 
         meta = {
-            "model": self.AI_MODEL_NAME,
-            "prompt_version": self.AI_PROMPT_VERSION,
-            "monitoring_version": self.VERSION,
-            "guardrail_version": self.AI_GUARDRAIL_VERSION,
+            "model": MODEL_NAME,
+            "prompt_version": PROMPT_VERSION,
+            "retriever_version": RETRIEVER_VERSION,
+            "schema_version": SCHEMA_VERSION,
+            "monitoring_version": MONITORING_VERSION,
+            "guardrail_version": GUARDRAIL_VERSION,
             "tokens_input": tokens_input,
             "tokens_output": tokens_output,
             "estimated_cost": self.estimate_cost(tokens_input, tokens_output),
@@ -48,6 +53,7 @@ class MonitoringService:
             "rag_enabled": rag_enabled,
             "guardrail_triggered": guardrail_triggered,
             "cache_hit": cache_hit,
+            "retriever_name": retriever_name
         }
 
         return {
