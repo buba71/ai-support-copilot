@@ -1,5 +1,8 @@
 from ai_service.core.schemas.retrieval import RetrievedChunk
 from ai_service.infrastructure.vector_db import VectorDB
+from ai_service.core.logging.config import get_logger
+
+logger = get_logger(__name__)
 
 
 class ChromaRetriever:
@@ -12,6 +15,7 @@ class ChromaRetriever:
         self.vector_db = vector_db
 
     def retrieve(self, query: str, k: int = 4) -> list[RetrievedChunk]:
+        logger.info("[TECH] retrieve_start query=%s", query)
         candidates = self.vector_db.search(query, k=8)
 
         results: list[RetrievedChunk] = []
@@ -36,4 +40,5 @@ class ChromaRetriever:
             key=lambda chunk: chunk.score if chunk.score is not None else 0.0,
             reverse=True,
         )
+        logger.info("[TECH] retrieve_end results=%s", len(results))
         return results[:k]
