@@ -3,14 +3,15 @@ import time
 
 from pydantic import ValidationError
 
-from ai_service.infrastructure.llm_client import LLMClient
 from ai_service.prompts import TICKET_ANALYSIS_PROMPT
 from ai_service.models import TicketAnalysis
-from ai_service.rag_service import RagService
 from ai_service.monitoring import MonitoringService
 from ai_service.guardrails import GuardrailEngine
 from ai_service.cache.llm_cache_service import LLMCacheService
 from ai_service.core.logging.config import get_logger
+from ai_service.core.interfaces.llm_client_interface import LLMClientInterface
+from ai_service.core.interfaces.rag_service_interface import RagServiceInterface
+from ai_service.core.schemas.retrieval import RetrievedChunk
 
 logger = get_logger(__name__)
 
@@ -18,8 +19,8 @@ logger = get_logger(__name__)
 class TicketAnalyzer:
     def __init__(
         self,
-        llm_client: LLMClient,
-        rag_service: RagService,
+        llm_client: LLMClientInterface,
+        rag_service: RagServiceInterface,
         monitoring_service: MonitoringService,
         guardrail_engine: GuardrailEngine,
         cache_service: LLMCacheService
@@ -101,10 +102,10 @@ class TicketAnalyzer:
         self.cache.set(prompt, result)
         return result
 
-    def _get_context(self, ticket_text: str, use_rag: bool) -> tuple[list, str]:
+    def _get_context(self, ticket_text: str, use_rag: bool) -> tuple[list[RetrievedChunk], str]:
         if use_rag:
             rag_results = self.rag.search(ticket_text, k=4)
-            context = "\n\n".join([doc.content for doc in rag_results])
+            context = "\n\n".join(doc.content for doc in rag_results)
             return rag_results, context
         return [], ""
 

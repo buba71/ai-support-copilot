@@ -8,5 +8,5 @@ class RagService:
     def get_retriever_name(self) -> str:
         return getattr(self.retriever, "VERSION", "unknown")
 
-    def search(self, query: str, k: int = 2)->list[RetrievedChunk]:
+    def search(self, query: str, k: int | None = None)->list[RetrievedChunk]:
         return self.retriever.retrieve(query, k=k)

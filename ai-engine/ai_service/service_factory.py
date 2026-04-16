@@ -17,7 +17,12 @@ def get_ticket_analyzer() -> TicketAnalyzer:
     redis_conn = get_redis_connection()
     
     vector_db = VectorDB()
-    retriever = ChromaRetriever(vector_db=vector_db)
+    retriever = ChromaRetriever(
+        vector_db=vector_db,
+        default_k=4,
+        candidate_k=8,
+        min_score=0.0
+    )
     rag_service = RagService(retriever=retriever)
 
     return TicketAnalyzer(
