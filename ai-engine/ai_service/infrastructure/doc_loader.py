@@ -1,11 +1,14 @@
 from pathlib import Path
-from ai_service.rag_service import RagService
+from typing import List, Dict, Any
 
-def load_docs(path: str):
+def load_docs(path: str)->List[Dict[str, Any]]:
     docs = []
-    for file in Path(path).glob("*.txt"):
-        docs.append(file.read_text(encoding="utf-8"))
-    return docs
 
-# documents = load_docs("rag_docs")
-# rag = RagService(documents) 
+    for file in Path(path).glob("*.txt"):
+
+        docs.append({
+            "source": file.name,
+            "content": file.read_text(encoding="utf-8")
+        })
+
+    return docs
