@@ -218,3 +218,17 @@ Responsable :
 Objectif :
 - pouvoir remplacer l’implémentation sans casser TicketAnalyzer
 - préparer LlamaIndex et les benchmarks
+
+## Hooks préparés pour le futur retrieval
+
+### Reranker hook
+Le retriever peut recevoir un reranker optionnel via `BaseReranker`.
+Objectif : permettre une seconde étape de tri sans modifier `TicketAnalyzer`.
+
+### Hybrid search hook
+Non implémenté.
+Prévu comme future extension pour combiner recherche vectorielle et recherche keyword.
+
+### Multi-query retrieval hook
+Non implémenté.
+Prévu comme future extension pour reformuler la query en plusieurs variantes.

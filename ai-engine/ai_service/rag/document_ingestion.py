@@ -35,6 +35,7 @@ def build_indexable_documents(
                 "content": chunk,
                 "metadata": {
                     "source": source,
+                    "source_id": source_stem,
                     "type": "text_file",
                     "chunk_index": index,
                     "chunk_count": len(chunks),
