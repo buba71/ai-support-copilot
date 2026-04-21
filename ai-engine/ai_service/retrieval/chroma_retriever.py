@@ -1,6 +1,7 @@
 from ai_service.core.schemas.retrieval import RetrievedChunk
 from ai_service.infrastructure.vector_db import VectorDB
 from ai_service.core.logging.config import get_logger
+from ai_service.retrieval.reranker import BaseReranker
 
 logger = get_logger(__name__)
 
@@ -15,15 +16,18 @@ class ChromaRetriever:
         self, vector_db: VectorDB,
         default_k: int = 4,
         candidate_k: int = 8,
-        min_score: float = 0.0
+        min_score: float = 0.0,
+        reranker: BaseReranker | None = None,
     ):
         self.vector_db = vector_db
         self.default_k = default_k
+        self.reranker = reranker
         self.candidate_k = candidate_k
         self.min_score = min_score
 
     def retrieve(self, query: str, k: int | None = None) -> list[RetrievedChunk]:
         final_k = k if k is not None else self.default_k
+
         if final_k <= 0:
             logger.warning("[TECH] invalid_final_k=%s defaulting_to=%s", final_k, self.default_k)
             final_k = self.default_k
@@ -67,6 +71,12 @@ class ChromaRetriever:
             key=lambda chunk: chunk.score if chunk.score is not None else 0.0,
             reverse=True,
         )
+
+        if self.reranker is not None:
+            logger.info("[TECH] reranker_enabled")
+            results = self.reranker.rerank(query, results)
+        else:
+            logger.info("[TECH] reranker_disabled")
 
         final_results = results[:final_k]
 
