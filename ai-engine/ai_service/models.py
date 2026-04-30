@@ -7,9 +7,19 @@ class TicketAnalysis(BaseModel):
         description="Short summary of the ticket"
     )
 
-    category: str = Field(
+    category: Literal[
+        "warranty",
+        "premium_extension",
+        "escalation",
+        "repair_delay",
+        "faq_support",
+        "missing_item",
+        "accidental_damage",
+        "product_defect",
+        "customer_dispute",
+    ] = Field(
         ...,
-        description="Issue category"
+        description="Issue category. Must be one of the allowed taxonomy values."
     )
 
     urgency: Literal["low", "medium", "high"] = Field(

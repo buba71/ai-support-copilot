@@ -35,6 +35,25 @@ def debug_examples(analyzer, dataset, use_rag: bool, limit: int = 5):
 
         print("-" * 60)
 
+        if decision.get("category") != item["expected_category"]:
+            print("CATEGORY ERROR")
+            print("ID:", item["id"])
+            print("EXPECTED:", item["expected_category"])
+            print("PREDICTED:", decision.get("category"))
+            print("POLICY:", decision.get("recommended_policy"))
+            print("ESCALATION:", decision.get("escalation_required"))
+            print("-" * 60)
+
+        if decision.get("escalation_required") != item["expected_escalation"]:
+            print("ESCALATION ERROR")
+            print("ID:", item["id"])
+            print("EXPECTED:", item["expected_escalation"])
+            print("PREDICTED:", decision.get("escalation_required"))
+            print("CATEGORY:", decision.get("category"))
+            print("URGENCY:", decision.get("urgency"))
+            print("POLICY:", decision.get("recommended_policy"))
+            print("-" * 60)
+
 
 def run_evaluation(use_rag: bool):
     analyzer = get_ticket_analyzer()

@@ -32,4 +32,9 @@ class GuardrailEngine:
             decision["recommended_policy"] = "procedure_escalation_sav_v1"
             return decision, "GR-003: FAQ forbidden for high urgency"
 
+        # Rule 4 — Premium extension always requires escalation
+        if decision.get("category") == "premium_extension":
+            decision["escalation_required"] = True
+            return decision, "GR-004: Premium extension requires escalation"
+
         return decision, 'None'
