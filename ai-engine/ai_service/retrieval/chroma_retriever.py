@@ -59,7 +59,7 @@ class ChromaRetriever:
 
             chunk = RetrievedChunk(
                 content=item["content"],
-                source=metadata.get("source", "unknown"),
+                source=metadata.get("source_id", "unknown"),
                 score=score,
                 metadata=metadata,
             )

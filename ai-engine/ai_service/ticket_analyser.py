@@ -83,7 +83,7 @@ class TicketAnalyzer:
         logger.info(
             "[BUSINESS] category=%s priority=%s guardrail_triggered=%s",
             decision["category"],
-            decision["priority"],
+            decision["urgency"],
             guardrail_triggered
         )
 
@@ -155,6 +155,7 @@ class TicketAnalyzer:
         updated_decision["rag_documents"] = [
             {
                 "source": doc.source,
+                "source_id": doc.metadata.get("source_id"),
                 "score": doc.score,
                 "excerpt": doc.content[:500]
             }

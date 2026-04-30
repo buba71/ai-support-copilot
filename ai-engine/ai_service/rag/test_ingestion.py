@@ -5,7 +5,7 @@ db = VectorDB()
 results = db.search("refund defective product", k=3)
 
 for r in results:
-    print("SOURCE:", r["metadata"]["source"])
+    print("SOURCE:", r["metadata"]["source_id"])
     print("CONTENT:", r["content"][:100])
     print("DISTANCE:", r["distance"])
     print("---")
