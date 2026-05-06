@@ -1,63 +1,69 @@
 import json
+import argparse
 from ai_service.service_factory import get_ticket_analyzer
 from evaluation.metrics import EvaluationMetrics
 
 
-def load_dataset():
-    with open("evaluation/dataset.json", "r") as f:
+def load_dataset(dataset_path: str):
+    with open(dataset_path, "r") as f:
         return json.load(f)
 
 def debug_examples(analyzer, dataset, use_rag: bool, limit: int = 5):
     print(f"\n=== DEBUG EXAMPLES | RAG={use_rag} ===")
 
-    for item in dataset[:limit]:
+    category_errors = []
+    priority_errors = []
+    escalation_errors = []
+
+    for item in dataset:
         result = analyzer.analyze(item["ticket_input"], use_rag=use_rag)
         decision = result.get("decision", {})
 
-        print("ID:", item["id"])
-        print("TICKET:", item["ticket_input"])
-
-        print("EXPECTED CATEGORY:", item["expected_category"])
-        print("PREDICTED CATEGORY:", decision.get("category"))
-
-        print("EXPECTED PRIORITY:", item["expected_priority"])
-        print("PREDICTED URGENCY:", decision.get("urgency"))
-
-        print("EXPECTED SOURCES:", item["expected_sources"])
-        print("PREDICTED POLICY:", decision.get("recommended_policy"))
-
-        print("RAG SOURCES:", [
-            doc.get("source") for doc in decision.get("rag_documents", [])
-        ])
-
-        print("EXPECTED ESCALATION:", item["expected_escalation"])
-        print("PREDICTED ESCALATION:", decision.get("escalation_required"))
-
-        print("-" * 60)
-
         if decision.get("category") != item["expected_category"]:
-            print("CATEGORY ERROR")
-            print("ID:", item["id"])
-            print("EXPECTED:", item["expected_category"])
-            print("PREDICTED:", decision.get("category"))
-            print("POLICY:", decision.get("recommended_policy"))
-            print("ESCALATION:", decision.get("escalation_required"))
-            print("-" * 60)
+            category_errors.append({
+                "id": item["id"],
+                "ticket": item["ticket_input"],
+                "expected": item["expected_category"],
+                "predicted": decision.get("category"),
+                "policy": decision.get("recommended_policy"),
+                "rag_sources": [
+                    doc.get("source") for doc in decision.get("rag_documents", [])
+                ],
+            })
+
+        if decision.get("urgency") != item["expected_priority"]:
+            priority_errors.append({
+                "id": item["id"],
+                "expected": item["expected_priority"],
+                "predicted": decision.get("urgency"),
+                "category": decision.get("category"),
+            })
 
         if decision.get("escalation_required") != item["expected_escalation"]:
-            print("ESCALATION ERROR")
-            print("ID:", item["id"])
-            print("EXPECTED:", item["expected_escalation"])
-            print("PREDICTED:", decision.get("escalation_required"))
-            print("CATEGORY:", decision.get("category"))
-            print("URGENCY:", decision.get("urgency"))
-            print("POLICY:", decision.get("recommended_policy"))
-            print("-" * 60)
+            escalation_errors.append({
+                "id": item["id"],
+                "expected": item["expected_escalation"],
+                "predicted": decision.get("escalation_required"),
+                "category": decision.get("category"),
+                "priority": decision.get("urgency"),
+                "policy": decision.get("recommended_policy"),
+            })
+
+    print("\n=== CATEGORY ERRORS ===")
+    for e in category_errors:
+        print(e)
+
+    print("\n=== PRIORITY ERRORS ===")
+    for e in priority_errors:
+        print(e)
+
+    print("\n=== ESCALATION ERRORS ===")
+    for e in escalation_errors:
+        print(e)
 
 
-def run_evaluation(use_rag: bool):
+def run_evaluation(dataset, use_rag: bool):
     analyzer = get_ticket_analyzer()
-    dataset = load_dataset()
 
     debug_examples(analyzer, dataset, use_rag=use_rag, limit=5)
 
@@ -78,11 +84,16 @@ def run_evaluation(use_rag: bool):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str, required=True)
+
+    args = parser.parse_args()
+    dataset = load_dataset(args.dataset)
 
     print("=== RAG ENABLED ===")
-    rag_on = run_evaluation(use_rag=True)
+    rag_on = run_evaluation(dataset, use_rag=True)
     print(rag_on)
 
     print("\n=== RAG DISABLED ===")
-    rag_off = run_evaluation(use_rag=False)
+    rag_off = run_evaluation(dataset, use_rag=False)
     print(rag_off)

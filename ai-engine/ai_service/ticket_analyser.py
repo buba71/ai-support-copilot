@@ -13,6 +13,8 @@ from ai_service.core.interfaces.llm_client_interface import LLMClientInterface
 from ai_service.core.interfaces.rag_service_interface import RagServiceInterface
 from ai_service.core.schemas.retrieval import RetrievedChunk
 
+from ai_service.post_processing.decision_normalizer import DecisionNormalizer
+
 logger = get_logger(__name__)
 
 
@@ -23,13 +25,15 @@ class TicketAnalyzer:
         rag_service: RagServiceInterface,
         monitoring_service: MonitoringService,
         guardrail_engine: GuardrailEngine,
-        cache_service: LLMCacheService
+        cache_service: LLMCacheService,
+        normalizer: DecisionNormalizer
     ):
         self.llm = llm_client
         self.rag = rag_service
         self.monitoring = monitoring_service
         self.guardrail = guardrail_engine
         self.cache = cache_service
+        self.normalizer = normalizer
 
     def analyze(self, ticket_text: str, use_rag: bool = True) -> dict:
         """
@@ -78,16 +82,31 @@ class TicketAnalyzer:
         if error_response:
             return error_response
 
-        # 5. Post-process (Guardrails & RAG Docs)
-        decision, guardrail_triggered = self._post_process(parsed_data, ticket_text, rag_results)
+        # 5. Normalize decision before guardrails
+        logger.info("[TECH] normalizing_decision")
+        normalized_decision = self.normalizer.normalize(ticket_text, parsed_data)
+
+        logger.info(
+            "[BUSINESS] normalized_decision category=%s priority=%s",
+            normalized_decision["category"],
+            normalized_decision["urgency"]
+        )
+
+        # 6. Apply guardrails and attach RAG docs
+        decision, guardrail_triggered = self._post_process(
+            normalized_decision,
+            ticket_text,
+            rag_results
+        )
+
         logger.info(
             "[BUSINESS] category=%s priority=%s guardrail_triggered=%s",
             decision["category"],
             decision["urgency"],
             guardrail_triggered
-        )
+        )   
 
-        # 6. Final Enrichment & Cache
+        # 7. Final Enrichment & Cache
         result = self.monitoring.enrich(
             decision,
             tokens_input=tokens_input,

@@ -6,7 +6,7 @@ from ai_service.cache.llm_cache_service import LLMCacheService
 from ai_service.retrieval.chroma_retriever import ChromaRetriever
 from ai_service.infrastructure.vector_db import VectorDB
 from ai_service.ticket_analyser import TicketAnalyzer
-
+from ai_service.post_processing.decision_normalizer import DecisionNormalizer
 from ai_service.infrastructure.redis_connection import get_redis_connection
 
 def get_ticket_analyzer() -> TicketAnalyzer:
@@ -30,5 +30,6 @@ def get_ticket_analyzer() -> TicketAnalyzer:
         rag_service=rag_service,
         monitoring_service=MonitoringService(),
         guardrail_engine=GuardrailEngine(),
-        cache_service=LLMCacheService(redis_client=redis_conn)
+        cache_service=LLMCacheService(redis_client=redis_conn),
+        normalizer=DecisionNormalizer()
     )
