@@ -4,7 +4,7 @@ import time
 from pydantic import ValidationError
 
 from ai_service.prompts import TICKET_ANALYSIS_PROMPT
-from ai_service.models import TicketAnalysis
+from ai_service.models import TicketAnalysis, ReliableTicketAnalysis
 from ai_service.monitoring import MonitoringService
 from ai_service.guardrails import GuardrailEngine
 from ai_service.cache.llm_cache_service import LLMCacheService
@@ -104,11 +104,37 @@ class TicketAnalyzer:
             decision["category"],
             decision["urgency"],
             guardrail_triggered
-        )   
+        )  
+
+        guardrail_reason = "Guardrail triggered" if guardrail_triggered else None
+
+        reliability_fields = self._build_reliability_fields(
+            retrieved_chunks=rag_results,
+            guardrail_reason=guardrail_reason
+        ) 
+
+        rag_documents = decision.get("rag_documents", [])
+
+        decision_without_rag_documents = {
+            key: value
+            for key, value in decision.items()
+            if key != "rag_documents"
+        }
+
+        reliable_decision = {
+            **decision_without_rag_documents,
+            **reliability_fields
+        }
+
+        reliable_decision = ReliableTicketAnalysis(
+            **reliable_decision
+        ).model_dump()
+
+        reliable_decision["rag_documents"] = rag_documents
 
         # 7. Final Enrichment & Cache
         result = self.monitoring.enrich(
-            decision,
+            reliable_decision,
             tokens_input=tokens_input,
             tokens_output=tokens_output,
             latency_ms=latency_ms,
@@ -151,7 +177,7 @@ class TicketAnalyzer:
         try:
             data = json.loads(raw_response)
             validated_data = TicketAnalysis(**data)
-            return validated_data.dict(), None
+            return validated_data.model_dump(), None
         except json.JSONDecodeError:
             logger.error("[TECH] invalid_json_from_llm")
             return None, {
@@ -181,3 +207,72 @@ class TicketAnalyzer:
             for doc in rag_results
         ]
         return updated_decision, triggered
+
+    def _build_reliability_fields(
+        self,
+        retrieved_chunks: list[RetrievedChunk],
+        guardrail_reason: str | None,
+    ) -> dict:
+
+        used_sources = list(dict.fromkeys(
+            chunk.source
+            for chunk in retrieved_chunks
+            if chunk.source
+        ))
+
+        scores = [
+            chunk.score
+            for chunk in retrieved_chunks
+            if chunk.score is not None
+        ]
+
+        best_score = max(scores) if scores else None
+
+        if not used_sources or best_score is None or best_score < 0.45:
+            logger.warning(
+                "[BUSINESS] insufficient_context_detected best_score=%s",
+                best_score
+        )
+
+        logger.warning(
+            "[BUSINESS] confidence_score=0.35 insufficient_context=True"
+        )
+
+        return {
+            "confidence_score": 0.35,
+            "used_sources": used_sources,
+            "insufficient_context": True,
+            "fallback_reason": "No sufficiently relevant source found",
+        }
+
+        confidence_score = 0.8
+        fallback_reason = None
+        
+        if guardrail_reason:
+
+            confidence_score = min(
+                confidence_score,
+                0.75
+            )
+            fallback_reason = guardrail_reason
+
+        logger.info(
+            "[BUSINESS] confidence_score=%s insufficient_context=%s",
+            confidence_score,
+            False
+        )
+        
+        return {
+            "confidence_score": confidence_score,
+            "used_sources": used_sources,
+            "insufficient_context": False,
+            "fallback_reason": fallback_reason
+        }
+        
+
+        
+
+        
+        
+
+        

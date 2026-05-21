@@ -37,4 +37,4 @@ class GuardrailEngine:
             decision["escalation_required"] = True
             return decision, "GR-004: Premium extension requires escalation"
 
-        return decision, 'None'
+        return decision, None
