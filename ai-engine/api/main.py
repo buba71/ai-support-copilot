@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from ai_service.queue.queue_service import QueueService
 from rq.job import Job
-import redis
+
 
 queue = QueueService()
 app = FastAPI()

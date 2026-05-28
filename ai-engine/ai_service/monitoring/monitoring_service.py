@@ -32,14 +32,20 @@ class MonitoringService:
         *,
         tokens_input: int,
         tokens_output: int,
-        latency_ms: int,
         rag_enabled: bool,
         guardrail_triggered: str | None,
         cache_hit: bool,
         retriever_name: str,
+        request_id: str,
+        retrieval_latency_ms: int,
+        llm_latency_ms: int,
+        post_processing_latency_ms: int,
+        total_latency_ms: int,
+        latency_ms: int # legacy field kept for backward compatibility
     ) -> dict:
 
         meta = {
+            "request_id": request_id,
             "model": MODEL_NAME,
             "prompt_version": PROMPT_VERSION,
             "retriever_version": RETRIEVER_VERSION,
@@ -49,11 +55,16 @@ class MonitoringService:
             "tokens_input": tokens_input,
             "tokens_output": tokens_output,
             "estimated_cost": self.estimate_cost(tokens_input, tokens_output),
-            "latency_ms": latency_ms,
             "rag_enabled": rag_enabled,
             "guardrail_triggered": guardrail_triggered,
             "cache_hit": cache_hit,
-            "retriever_name": retriever_name
+            "retriever_name": retriever_name,
+            "retrieval_latency_ms": retrieval_latency_ms,
+            "llm_latency_ms": llm_latency_ms,
+            "post_processing_latency_ms": post_processing_latency_ms,
+            "total_latency_ms": total_latency_ms,
+            "latency_ms": total_latency_ms, # legacy field kept for backward compatibility
+            
         }
 
         return {

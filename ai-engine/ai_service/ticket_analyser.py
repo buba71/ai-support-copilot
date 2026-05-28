@@ -1,5 +1,6 @@
 import json
 import time
+import uuid
 
 from pydantic import ValidationError
 
@@ -35,15 +36,28 @@ class TicketAnalyzer:
         self.cache = cache_service
         self.normalizer = normalizer
 
-    def analyze(self, ticket_text: str, use_rag: bool = True) -> dict:
+    def analyze(self, ticket_text: str, use_rag: bool = True, request_id: str | None = None) -> dict:
         """
         Main orchestration method using specialized private methods.
         """
-        # 1. Context Retrieval
-        logger.info("[TECH] analyze_start use_rag=%s", use_rag)
-        rag_results, context = self._get_context(ticket_text, use_rag)
+        total_start = time.time()   
+        
+        # Generate request_id if not provided
+        if request_id is None:
+            request_id = f"req_{uuid.uuid4().hex[:8]}"
 
-        # 2. Prompt Building
+        logger.info("[%s][TECH] analyze_start use_rag=%s", request_id, use_rag)
+
+        retrieval_start = time.time()
+        rag_results, context = self._get_context(ticket_text, use_rag)
+        retrieval_latency_ms = int((time.time() - retrieval_start) * 1000)
+
+        logger.info(
+            "[%s][TECH] retrieval_end latency_ms=%s",
+            request_id,
+            retrieval_latency_ms
+        )
+
         prompt = self._get_prompt(ticket_text, context)
         messages = [
             {
@@ -59,35 +73,40 @@ class TicketAnalyzer:
         # 3. Call LLM (with cache check)
         cached_response = self.cache.get(prompt)
         if cached_response is not None:
-            return self._format_cache_hit(cached_response)
+            return self._format_cache_hit(cached_response, request_id)
 
-        start = time.time()
-        logger.info("[TECH] cache_miss")
-        logger.info("[TECH] llm_call_start")
+        llm_start = time.time()
+        logger.info("[%s][TECH] cache_miss", request_id)
+        logger.info("[%s][TECH] llm_call_start", request_id)
         llm_response = self.llm.ask(messages)
         raw_response = llm_response.response
         tokens_input = llm_response.tokens_input
         tokens_output = llm_response.tokens_output
 
-        latency_ms = int((time.time() - start) * 1000)
+        llm_latency_ms = int((time.time() - llm_start) * 1000)
+
         logger.info(
-            "[TECH] llm_call_end latency_ms=%s tokens_input=%s tokens_output=%s",
-            latency_ms,
+            "[%s][TECH] llm_call_end latency_ms=%s tokens_input=%s tokens_output=%s",
+            request_id,
+            llm_latency_ms,
             tokens_input,
             tokens_output
         )
 
         # 4. Parse and Validate
-        parsed_data, error_response = self._parse_and_validate(raw_response)
+        post_processing_start = time.time()
+
+        parsed_data, error_response = self._parse_and_validate(raw_response, request_id)
         if error_response:
             return error_response
 
         # 5. Normalize decision before guardrails
-        logger.info("[TECH] normalizing_decision")
+        logger.info("[%s][TECH] normalizing_decision", request_id)
         normalized_decision = self.normalizer.normalize(ticket_text, parsed_data)
 
         logger.info(
-            "[BUSINESS] normalized_decision category=%s priority=%s",
+            "[%s][BUSINESS] normalized_decision category=%s priority=%s",
+            request_id,
             normalized_decision["category"],
             normalized_decision["urgency"]
         )
@@ -96,11 +115,13 @@ class TicketAnalyzer:
         decision, guardrail_triggered = self._post_process(
             normalized_decision,
             ticket_text,
-            rag_results
+            rag_results,
+            request_id
         )
 
         logger.info(
-            "[BUSINESS] category=%s priority=%s guardrail_triggered=%s",
+            "[%s][BUSINESS] final_decision category=%s priority=%s guardrail_triggered=%s",
+            request_id,
             decision["category"],
             decision["urgency"],
             guardrail_triggered
@@ -110,7 +131,8 @@ class TicketAnalyzer:
 
         reliability_fields = self._build_reliability_fields(
             retrieved_chunks=rag_results,
-            guardrail_reason=guardrail_reason
+            guardrail_reason=guardrail_reason,
+            request_id=request_id
         ) 
 
         rag_documents = decision.get("rag_documents", [])
@@ -132,19 +154,45 @@ class TicketAnalyzer:
 
         reliable_decision["rag_documents"] = rag_documents
 
+        post_processing_latency_ms = int(
+            (time.time() - post_processing_start) * 1000
+        )
+
+        logger.info(
+           "[%s][TECH] post_processing_end latency_ms=%s",
+           request_id,
+           post_processing_latency_ms
+        )
+
+        total_latency_ms = int(
+            (time.time() - total_start) * 1000
+        )
+
+        logger.info(
+           "[%s][TECH] total_end latency_ms=%s",
+           request_id,
+           total_latency_ms
+        )
+
         # 7. Final Enrichment & Cache
         result = self.monitoring.enrich(
             reliable_decision,
             tokens_input=tokens_input,
             tokens_output=tokens_output,
-            latency_ms=latency_ms,
             rag_enabled=use_rag,
             guardrail_triggered=guardrail_triggered,
             cache_hit=False,
-            retriever_name=self.rag.get_retriever_name()
+            retriever_name=self.rag.get_retriever_name(),
+            request_id=request_id,
+            retrieval_latency_ms=retrieval_latency_ms,
+            llm_latency_ms=llm_latency_ms,
+            post_processing_latency_ms=post_processing_latency_ms,
+            total_latency_ms=total_latency_ms,
+            latency_ms=total_latency_ms, # legacy field kept for backward compatibility
         )
 
         self.cache.set(prompt, result)
+
         return result
 
     def _get_context(self, ticket_text: str, use_rag: bool) -> tuple[list[RetrievedChunk], str]:
@@ -160,11 +208,12 @@ class TicketAnalyzer:
             ticket=ticket_text
         )
 
-    def _format_cache_hit(self, cached_response: dict) -> dict:
+    def _format_cache_hit(self, cached_response: dict, request_id: str | None = None) -> dict:
         logger.info("[TECH] cache_hit")
         result = cached_response.copy()
         result["meta"] = cached_response["meta"].copy()
         result["meta"].update({
+            "request_id": request_id,
             "cache_hit": True,
             "latency_ms": 0,
             "tokens_input": 0,
@@ -173,29 +222,28 @@ class TicketAnalyzer:
         })
         return result
 
-    def _parse_and_validate(self, raw_response: str) -> tuple[dict | None, dict | None]:
+    def _parse_and_validate(self, raw_response: str, request_id: str) -> tuple[dict | None, dict | None]:
         try:
             data = json.loads(raw_response)
             validated_data = TicketAnalysis(**data)
             return validated_data.model_dump(), None
         except json.JSONDecodeError:
-            logger.error("[TECH] invalid_json_from_llm")
+            logger.error("[%s][TECH] invalid_json_from_llm", request_id)
             return None, {
                 "error": "Invalid response from LLM client - response was not valid JSON",
                 "raw_response": raw_response[:500]
             }
         except ValidationError as e:
-            logger.error("[TECH] invalid_schema_from_llm")
+            logger.error("[%s][TECH] invalid_schema_from_llm", request_id)
             return None, {
                 "error": "INVALID_SCHEMA",
                 "details": e.errors(),
                 "raw_response": raw_response[:500]
             }
 
-    def _post_process(self, decision: dict, ticket_text: str, rag_results: list) -> tuple[dict, bool]:
+    def _post_process(self, decision: dict, ticket_text: str, rag_results: list, request_id: str) -> tuple[dict, bool]:
         updated_decision, triggered = self.guardrail.apply(decision, ticket_text)
-        logger.info("[BUSINESS] guardrail_triggered=%s", triggered)
-            
+        logger.info("[%s][BUSINESS] guardrail_triggered=%s", request_id, triggered)
 
         updated_decision["rag_documents"] = [
             {
@@ -212,6 +260,7 @@ class TicketAnalyzer:
         self,
         retrieved_chunks: list[RetrievedChunk],
         guardrail_reason: str | None,
+        request_id: str
     ) -> dict:
 
         used_sources = list(dict.fromkeys(
@@ -230,20 +279,21 @@ class TicketAnalyzer:
 
         if not used_sources or best_score is None or best_score < 0.45:
             logger.warning(
-                "[BUSINESS] insufficient_context_detected best_score=%s",
-                best_score
-        )
+                "[%s][BUSINESS] insufficient_context_detected best_score=%s",
+                request_id, best_score
+            )
 
-        logger.warning(
-            "[BUSINESS] confidence_score=0.35 insufficient_context=True"
-        )
+            logger.warning(
+                "[%s][BUSINESS] confidence_score=0.35 insufficient_context=True",
+                request_id
+            )
 
-        return {
-            "confidence_score": 0.35,
-            "used_sources": used_sources,
-            "insufficient_context": True,
-            "fallback_reason": "No sufficiently relevant source found",
-        }
+            return {
+                "confidence_score": 0.35,
+                "used_sources": used_sources,
+                "insufficient_context": True,
+                "fallback_reason": "No sufficiently relevant source found",
+            }
 
         confidence_score = 0.8
         fallback_reason = None
@@ -257,9 +307,8 @@ class TicketAnalyzer:
             fallback_reason = guardrail_reason
 
         logger.info(
-            "[BUSINESS] confidence_score=%s insufficient_context=%s",
-            confidence_score,
-            False
+            "[%s][BUSINESS] confidence_score=%s insufficient_context=%s",
+            request_id, confidence_score, False
         )
         
         return {
@@ -268,11 +317,3 @@ class TicketAnalyzer:
             "insufficient_context": False,
             "fallback_reason": fallback_reason
         }
-        
-
-        
-
-        
-        
-
-        
