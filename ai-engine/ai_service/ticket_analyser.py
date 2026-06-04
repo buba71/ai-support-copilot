@@ -5,7 +5,7 @@ import uuid
 from pydantic import ValidationError
 
 from ai_service.prompts import TICKET_ANALYSIS_PROMPT
-from ai_service.models import TicketAnalysis, ReliableTicketAnalysis
+from ai_service.models import TicketAnalysis, ReliableTicketAnalysis, SupportCopilotResponse
 from ai_service.monitoring import MonitoringService
 from ai_service.guardrails import GuardrailEngine
 from ai_service.cache.llm_cache_service import LLMCacheService
@@ -154,6 +154,18 @@ class TicketAnalyzer:
 
         reliable_decision["rag_documents"] = rag_documents
 
+        draft_reply = self._build_draft_reply(reliable_decision)
+        
+        logger.info(
+            "[%s][BUSINESS] draft_reply_generated",
+            request_id
+        )
+
+        copilot_response = SupportCopilotResponse(
+            internal_analysis=reliable_decision,
+            draft_reply=draft_reply
+        ).model_dump()
+
         post_processing_latency_ms = int(
             (time.time() - post_processing_start) * 1000
         )
@@ -176,7 +188,7 @@ class TicketAnalyzer:
 
         # 7. Final Enrichment & Cache
         result = self.monitoring.enrich(
-            reliable_decision,
+            copilot_response,
             tokens_input=tokens_input,
             tokens_output=tokens_output,
             rag_enabled=use_rag,
@@ -209,12 +221,20 @@ class TicketAnalyzer:
         )
 
     def _format_cache_hit(self, cached_response: dict, request_id: str | None = None) -> dict:
-        logger.info("[TECH] cache_hit")
+        logger.info(
+            "[%s][TECH] cache_hit",
+            request_id
+        )
+
         result = cached_response.copy()
         result["meta"] = cached_response["meta"].copy()
         result["meta"].update({
             "request_id": request_id,
             "cache_hit": True,
+            "retrieval_latency_ms": 0,
+            "llm_latency_ms": 0,
+            "post_processing_latency_ms": 0,
+            "total_latency_ms": 0,
             "latency_ms": 0,
             "tokens_input": 0,
             "tokens_output": 0,
@@ -317,3 +337,36 @@ class TicketAnalyzer:
             "insufficient_context": False,
             "fallback_reason": fallback_reason
         }
+
+    def _build_draft_reply(self, analysis: dict) -> str:
+        if analysis.get("insufficient_context"):
+            return (
+                "Bonjour,\n\n"
+                "Merci pour votre message. "
+                "Nous avons bien reçu votre demande, mais les informations disponibles "
+                "ne permettent pas encore d’apporter une réponse définitive. "
+                "Votre dossier va être vérifié par un conseiller afin de vous apporter "
+                "une réponse adaptée.\n\n"
+                "Cordialement,\n"
+                "Le service client"
+            )
+
+        if analysis.get("escalation_required"):
+            return (
+                "Bonjour,\n\n"
+                "Merci pour votre message. "
+                "Votre demande nécessite une vérification approfondie par notre équipe support. "
+                "Nous allons transmettre votre dossier à un conseiller spécialisé afin de vous "
+                "apporter une réponse adaptée.\n\n"
+                "Cordialement,\n"
+                "Le service client"
+            )
+
+        return (
+            "Bonjour,\n\n"
+            "Merci pour votre message. "
+            "Après analyse de votre demande, notre équipe a identifié la procédure applicable. "
+            "Nous allons traiter votre dossier conformément à notre politique support.\n\n"
+            "Cordialement,\n"
+            "Le service client"
+        )

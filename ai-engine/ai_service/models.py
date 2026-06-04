@@ -71,3 +71,14 @@ class ReliableTicketAnalysis(TicketAnalysis):
         default=None,
         description="Reason explaining degraded or fallback behavior"
     )
+
+class SupportCopilotResponse(BaseModel):
+    internal_analysis: ReliableTicketAnalysis = Field(
+        ...,
+        description="Internal support analysis used by the support agent"
+    )
+
+    draft_reply: str = Field(
+        ...,
+        description="Draft reply that can be sent to the customer"
+    )
