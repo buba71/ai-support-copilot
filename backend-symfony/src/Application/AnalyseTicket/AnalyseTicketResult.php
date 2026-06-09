@@ -21,21 +21,34 @@ final class AnalyseTicketResult
     public static function fromArray(array $data): self
     {
         $decision = $data['decision'] ?? [];
+
+        $analysis = $decision['internal_analysis'] ?? $decision;
+
         $meta = $data['meta'] ?? [];
-        
-        $ragDocs = $decision['rag_documents'] ?? [];
-        $avgScore = !empty($ragDocs) ? array_sum(array_column($ragDocs, 'score')) / count($ragDocs) : 0.0;
+
+        $ragDocs = $analysis['rag_documents'] ?? [];
+
+        $avgScore = !empty($ragDocs)
+            ? array_sum(array_column($ragDocs, 'score')) / count($ragDocs)
+            : 0.0;
 
         return new self(
-            summary:  $decision['summary'] ?? '',
-            category: $decision['category'] ?? '',
-            urgency:  $decision['urgency'] ?? '',
-            sources:  $ragDocs ?: ($decision['sources'] ?? []),
-            score:    (float) ($decision['score'] ?? $avgScore),
-            recommendedPolicy: $decision['recommended_policy'] ?? null,
-            escalationRequired: (bool) ($decision['escalation_required'] ?? false),
-            justification: $decision['justification'] ?? null,
-            meta: $meta,
+            summary:  $analysis['summary'] ?? '',
+            category: $analysis['category'] ?? '',
+            urgency:  $analysis['urgency'] ?? '',
+            sources:  $ragDocs ?: ($analysis['used_sources'] ?? []),
+            score:    (float) ($analysis['score'] ?? $analysis['confidence_score'] ?? $avgScore),
+            recommendedPolicy: $analysis['recommended_policy'] ?? null,
+            escalationRequired: (bool) ($analysis['escalation_required'] ?? false),
+            justification: $analysis['justification'] ?? null,
+            meta: [
+                ...$meta,
+                'draft_reply' => $decision['draft_reply'] ?? null,
+                'confidence_score' => $analysis['confidence_score'] ?? null,
+                'insufficient_context' => $analysis['insufficient_context'] ?? null,
+                'fallback_reason' => $analysis['fallback_reason'] ?? null,
+                'used_sources' => $analysis['used_sources'] ?? [],
+            ],
         );
     }
 }

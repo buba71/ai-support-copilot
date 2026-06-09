@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class AnalyseTicketController extends AbstractController
 {
     #[Route('/api/ticket/analyse', name: 'analyse_ticket', methods: ['POST'])]
-    public function __invoke(
+    public function start(
       Request $request,
       AnalyseTicket $analyseTicket
       ): JsonResponse {
@@ -25,13 +25,49 @@ final class AnalyseTicketController extends AbstractController
                 return $this->json(['error' => 'Le contenu du ticket ne peut pas être vide'], 400);
             }
             
-            $rawData = $analyseTicket->getRawAnalysis($content);
+            $rawData = $analyseTicket->start($content);
 
             return $this->json($rawData);
         } catch (\RuntimeException $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         } catch (\Exception $e) {
             return $this->json(['error' => 'Une erreur est survenue lors de l\'analyse du ticket'], 500);
+        }
+    }
+
+    #[Route('/api/analyse/jobs/{jobId}', name: 'analyse_ticket_job', methods: ['POST'])]
+    public function job(
+        string $jobId,
+        Request $request,
+        AnalyseTicket $analyseTicket
+    ): JsonResponse {
+
+        try {
+            $data = $request->toArray();
+            $content = $data['ticket'] ?? '';
+
+            if (empty($content)) {
+                return $this->json(['error' => 'Le contenu du ticket ne peut pas être vide'], 400);
+            }
+            
+            $jobData = $analyseTicket->fetchJobAndPersistIfFinished(
+                jobId: $jobId,
+                ticketContent: $content
+            );
+
+            return $this->json($jobData);
+
+        } catch (\RuntimeException $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        } catch (\Exception $e) {
+            return $this->json([
+                'error' => 'Une erreur est survenue lors de la récupération du job IA',
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
         }
     }
 }

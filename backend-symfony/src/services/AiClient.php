@@ -23,7 +23,7 @@ final readonly class AiClient
     * @return array The analysis result from the AI service.
     * @throws \RuntimeException if there is an error communicating with the AI service.
     */
-    public function analyse(string $ticket): array
+    public function startAnalysis(string $ticket): array
     {
         try {
             $response = $this->httpClient->request(
@@ -49,5 +49,37 @@ final readonly class AiClient
                 previous: $e
             );
         }
+    }
+
+    public function getJob(string $jobId): array
+    {
+        try {
+            $baseUrl = 'http://localhost:8000';
+            
+            $response = $this->httpClient->request(
+                method: 'GET',
+                url: $baseUrl . '/jobs/' . $jobId,
+                options: [
+                    'timeout' => 10,
+                ]
+            );
+
+            return $response->toArray();
+            
+        } catch (
+            TransportExceptionInterface |
+            ClientExceptionInterface |
+            ServerExceptionInterface $e) {
+            // Log the exception or handle it as needed
+            throw new \RuntimeException(
+                message: 'Error communicating with AI service: ' . $e->getMessage(),
+                previous: $e
+            );
+        }
+    }
+
+    public function analyse(string $ticket): array
+    {
+        return $this->startAnalysis($ticket);
     }
 }

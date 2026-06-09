@@ -1,51 +1,148 @@
 <template>
   <div class="ticket-analyser">
+    <h3>Analyse IA du ticket</h3>
+
     <textarea
       v-model="ticket"
-      placeholder="Colle le ticket client ici…"
-      class="ticket-input"
-      rows="4"
+      rows="6"
+      placeholder="Saisissez le contenu du ticket..."
     />
 
     <button
+      type="button"
+      :disabled="loading || !ticket.trim()"
       @click="analyzeTicket"
-      class="analyze-button"
-      :disabled="loading"
     >
-      {{ loading ? 'Analyse en cours…' : 'Analyser le ticket' }}
+      {{ loading ? 'Analyse en cours...' : 'Analyser le ticket' }}
     </button>
 
-    <p v-if="error" class="error-message">{{ error }}</p>
+    <p v-if="jobId" class="job-status">
+      Job IA : {{ jobId }}
+    </p>
+
+    <p v-if="error" class="error">
+      {{ error }}
+    </p>
 
     <div v-if="result" class="result-box">
-      {{ result }}
-      <p><strong>Résumé :</strong> {{ result.summary }}</p>
-      <p><strong>Catégorie :</strong> {{ result.category }}</p>
-      <p><strong>Urgence :</strong> {{ result.urgency }}</p>
+      <h4>Analyse interne support</h4>
 
-      <div v-if="result.sources?.length">
-        <h4 class="sources-title">Sources utilisées :</h4>
-        <ul class="sources-list">
-          <li v-for="(src, i) in result.sources" :key="i">
-            {{ src }}
-          </li>
-        </ul>
-      </div>
+      <p>
+        <strong>Résumé :</strong>
+        {{ result.internal_analysis?.summary }}
+      </p>
+
+      <p>
+        <strong>Catégorie :</strong>
+        {{ result.internal_analysis?.category }}
+      </p>
+
+      <p>
+        <strong>Urgence :</strong>
+        {{ result.internal_analysis?.urgency }}
+      </p>
+
+      <p>
+        <strong>Politique recommandée :</strong>
+        {{ result.internal_analysis?.recommended_policy }}
+      </p>
+
+      <p>
+        <strong>Escalade requise :</strong>
+        {{ result.internal_analysis?.escalation_required ? 'Oui' : 'Non' }}
+      </p>
+
+      <p>
+        <strong>Confiance :</strong>
+        {{ result.internal_analysis?.confidence_score }}
+      </p>
+
+      <p v-if="result.internal_analysis?.fallback_reason">
+        <strong>Raison du fallback :</strong>
+        {{ result.internal_analysis.fallback_reason }}
+      </p>
+
+      <h4>Brouillon de réponse client</h4>
+
+      <p class="draft-reply">
+        {{ result.draft_reply }}
+      </p>
+
+      <h4>Sources RAG</h4>
+
+      <ul v-if="result.internal_analysis?.used_sources?.length">
+        <li
+          v-for="(source, index) in result.internal_analysis.used_sources"
+          :key="index"
+        >
+          <strong>{{ source }}</strong>
+        </li>
+      </ul>
+
+      <p v-else>
+        Aucune source disponible.
+      </p>
+
+      <details>
+        <summary>JSON complet</summary>
+        <pre>{{ result }}</pre>
+      </details>
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref } from 'vue'
 
 const ticket = ref('')
-const result = ref(null)
 const loading = ref(false)
 const error = ref(null)
+const result = ref(null)
+const jobId = ref(null)
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const pollJob = async (id) => {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const response = await fetch(`/api/analyse/jobs/${id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ticket: ticket.value
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: 'Erreur lors de la récupération du job' }))
+
+      throw new Error(errorData.error || `Erreur HTTP: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data.status === 'finished') {
+      return data.result
+    }
+
+    if (data.status === 'failed') {
+      throw new Error('Le job IA a échoué')
+    }
+
+    await sleep(1000)
+  }
+
+  throw new Error('Le job IA n’a pas terminé dans le délai prévu')
+}
 
 const analyzeTicket = async () => {
   loading.value = true
   error.value = null
   result.value = null
+  jobId.value = null
 
   try {
     const response = await fetch('/api/ticket/analyse', {
@@ -53,17 +150,30 @@ const analyzeTicket = async () => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ ticket: ticket.value })
+      body: JSON.stringify({
+        ticket: ticket.value
+      })
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Erreur lors de l\'analyse' }))
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: 'Erreur lors de l’analyse' }))
+
       throw new Error(errorData.error || `Erreur HTTP: ${response.status}`)
     }
 
-    const data = await response.json()
-    result.value = data.decision || data
+    const jobData = await response.json()
 
+    if (!jobData.job_id) {
+      throw new Error('Aucun job_id retourné par le serveur')
+    }
+
+    jobId.value = jobData.job_id
+
+    const finalResult = await pollJob(jobData.job_id)
+
+    result.value = finalResult.decision || finalResult
   } catch (e) {
     error.value = e.message
   } finally {
@@ -72,78 +182,51 @@ const analyzeTicket = async () => {
 }
 </script>
 
-
 <style scoped>
 .ticket-analyser {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
+  gap: 1rem;
 }
 
-.ticket-input {
+textarea {
   width: 100%;
-  border: 1px solid #ccc;
-  padding: 8px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 14px;
+  padding: 0.75rem;
 }
 
-.analyze-button {
-  background-color: #2563eb;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 4px;
+button {
+  width: fit-content;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.2s;
 }
 
-.analyze-button:hover:not(:disabled) {
-  background-color: #1d4ed8;
-}
-
-.analyze-button:disabled {
-  background-color: #9ca3af;
+button:disabled {
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
-.error-message {
-  color: #dc2626;
-  padding: 10px;
-  background-color: #fee2e2;
-  border-radius: 4px;
-  border: 1px solid #fca5a5;
+.error {
+  color: #b00020;
+  font-weight: bold;
+}
+
+.job-status {
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 
 .result-box {
-  border: 1px solid #e5e7eb;
-  padding: 16px;
-  border-radius: 4px;
-  background-color: #f9fafb;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
-.result-box p {
-  margin: 8px 0;
+.draft-reply {
+  white-space: pre-line;
 }
 
-.sources-title {
-  margin-top: 16px;
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.sources-list {
-  list-style-type: disc;
-  margin-left: 20px;
-  margin-top: 8px;
-}
-
-.sources-list li {
-  margin: 4px 0;
+pre {
+  white-space: pre-wrap;
+  overflow-x: auto;
 }
 </style>

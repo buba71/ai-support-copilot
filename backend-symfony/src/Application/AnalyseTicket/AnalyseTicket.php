@@ -20,28 +20,34 @@ final readonly class AnalyseTicket
      * @param string $ticketContent
      * @return array
      */
-    public function getRawAnalysis(string $ticketContent): array
+    public function start(string $ticketContent): array
     {
-        $rawData = $this->aiClient->analyse($ticketContent);
-        $result = AnalyseTicketResult::fromArray($rawData);
-
-        $this->persistAnalysis($ticketContent, $result);
-
-        return $rawData;
+        return $this->aiClient->startAnalysis($ticketContent);
     }
 
     /**
+     * Fetches the job result from the AI service and persists it if finished.
+     * 
+     * @param string $jobId
      * @param string $ticketContent
      * @return AnalyseTicketResult
      */
-    public function execute(string $ticketContent): AnalyseTicketResult
+    public function fetchJobAndPersistIfFinished(string $jobId, string $ticketContent): array
     {
-        $rawData = $this->aiClient->analyse($ticketContent);
-        $result = AnalyseTicketResult::fromArray($rawData);
+        $jobData = $this->aiClient->getJob($jobId);
+        
+        if (($jobData['status'] ?? null) !== 'finished') {
+            return $jobData;
+        }
+
+        $resultData = $jobData['result'] ?? [];
+        
+
+        $result = AnalyseTicketResult::fromArray($resultData);
 
         $this->persistAnalysis($ticketContent, $result);
 
-        return $result;
+        return $jobData;
     }
 
     private function persistAnalysis(string $ticketContent, AnalyseTicketResult $result): void
