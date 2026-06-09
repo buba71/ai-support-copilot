@@ -15,6 +15,7 @@ final readonly class AiClient
     public function __construct(
         private HttpClientInterface $httpClient,
         private string $aiEndpoint,
+        private string $aiEngineBaseUrl,
     ) {}
 
     /**
@@ -54,11 +55,9 @@ final readonly class AiClient
     public function getJob(string $jobId): array
     {
         try {
-            $baseUrl = 'http://localhost:8000';
-            
             $response = $this->httpClient->request(
                 method: 'GET',
-                url: $baseUrl . '/jobs/' . $jobId,
+                url: $this->aiEngineBaseUrl . '/jobs/' . $jobId,
                 options: [
                     'timeout' => 10,
                 ]

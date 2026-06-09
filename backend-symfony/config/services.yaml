@@ -8,6 +8,7 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     ai_engine.endpoint: 'http://localhost:8000/analyze-ticket'
+    ai_engine_base_url: '%env(AI_ENGINE_BASE_URL)%'
 
 services:
     # default configuration for services in *this* file
@@ -26,3 +27,4 @@ services:
     App\services\AiClient:
         arguments:
             $aiEndpoint: '%ai_engine.endpoint%'
+            $aiEngineBaseUrl: '%ai_engine_base_url%'
