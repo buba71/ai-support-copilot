@@ -49,7 +49,7 @@ class TicketAnalyzer:
         logger.info("[%s][TECH] analyze_start use_rag=%s", request_id, use_rag)
 
         retrieval_start = time.time()
-        rag_results, context = self._get_context(ticket_text, use_rag)
+        rag_results, context = self._get_context(ticket_text, use_rag, request_id)
         retrieval_latency_ms = int((time.time() - retrieval_start) * 1000)
 
         logger.info(
@@ -207,9 +207,9 @@ class TicketAnalyzer:
 
         return result
 
-    def _get_context(self, ticket_text: str, use_rag: bool) -> tuple[list[RetrievedChunk], str]:
+    def _get_context(self, ticket_text: str, use_rag: bool, request_id: str | None = None) -> tuple[list[RetrievedChunk], str]:
         if use_rag:
-            rag_results = self.rag.search(ticket_text, k=4)
+            rag_results = self.rag.search(ticket_text, k=4, request_id=request_id)
             context = "\n\n".join(doc.content for doc in rag_results)
             return rag_results, context
         return [], ""

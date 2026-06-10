@@ -25,18 +25,19 @@ class ChromaRetriever:
         self.candidate_k = candidate_k
         self.min_score = min_score
 
-    def retrieve(self, query: str, k: int | None = None) -> list[RetrievedChunk]:
+    def retrieve(self, query: str, k: int | None = None, request_id: str | None = None) -> list[RetrievedChunk]:
         final_k = k if k is not None else self.default_k
 
         if final_k <= 0:
-            logger.warning("[TECH] invalid_final_k=%s defaulting_to=%s", final_k, self.default_k)
+            logger.warning("[%s][TECH] invalid_final_k=%s defaulting_to=%s", request_id, final_k, self.default_k)
             final_k = self.default_k
 
         if self.candidate_k <= 0:
-            logger.warning("[TECH] invalid_candidate_k=%s defaulting_to=%s", self.candidate_k, self.default_k)
+            logger.warning("[%s][TECH] invalid_candidate_k=%s defaulting_to=%s", request_id, self.candidate_k, self.default_k)
 
         logger.info(
-            "[TECH] retrieval_start retriever=%s final_k=%s candidate_k=%s min_score=%s",
+            "[%s][TECH] retrieval_start retriever=%s final_k=%s candidate_k=%s min_score=%s",
+            request_id,
             self.VERSION,
             final_k,
             self.candidate_k,
@@ -44,7 +45,7 @@ class ChromaRetriever:
         )
 
         candidates = self.vector_db.search(query, k=self.candidate_k)
-        logger.info("[TECH] retrieval_candidates=%s", len(candidates))
+        logger.info("[%s][TECH] retrieval_candidates=%s", request_id, len(candidates))
 
         results: list[RetrievedChunk] = []
         for item in candidates:
@@ -73,15 +74,16 @@ class ChromaRetriever:
         )
 
         if self.reranker is not None:
-            logger.info("[TECH] reranker_enabled")
+            logger.info("[%s][TECH] reranker_enabled", request_id)
             results = self.reranker.rerank(query, results)
         else:
-            logger.info("[TECH] reranker_disabled")
+            logger.info("[%s][TECH] reranker_disabled", request_id)
 
         final_results = results[:final_k]
 
         logger.info(
-            "[TECH] retrieval_filtered=%s retrieval_final=%s",
+            "[%s][TECH] retrieval_filtered=%s retrieval_final=%s",
+            request_id,
             len(results),
             len(final_results),
         )

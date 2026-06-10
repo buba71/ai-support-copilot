@@ -60,14 +60,7 @@ final class AnalyseTicketController extends AbstractController
         } catch (\RuntimeException $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         } catch (\Exception $e) {
-            return $this->json([
-                'error' => 'Une erreur est survenue lors de la récupération du job IA',
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ], 500);
+            return $this->json(['error' => 'Une erreur est survenue lors de la récupération du job IA',], 500);
         }
     }
 }
