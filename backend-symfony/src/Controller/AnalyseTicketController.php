@@ -9,20 +9,35 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Repository\TicketRepository;
 
 final class AnalyseTicketController extends AbstractController
 {
     #[Route('/api/ticket/analyse', name: 'analyse_ticket', methods: ['POST'])]
     public function start(
       Request $request,
-      AnalyseTicket $analyseTicket
+      AnalyseTicket $analyseTicket,
+      TicketRepository $ticketRepository
       ): JsonResponse {
         try {
             $data = $request->toArray();
-            $content = $data['ticket'] ?? '';
 
-            if (empty($content)) {
-                return $this->json(['error' => 'Le contenu du ticket ne peut pas être vide'], 400);
+            $content = $data['ticket'] ?? null;
+
+            if (!$content && isset($data['ticketId'])) {
+                $ticket = $ticketRepository->find((int) $data['ticketId']);
+
+                if (!$ticket) {
+                    return $this->json(['error' => 'Ticket introuvable'], 404);
+                }
+
+                $content = $ticket->getContent(); // adapte si ton getter a un autre nom
+            }
+
+            if (!$content) {
+                return $this->json([
+                    'error' => 'Le contenu du ticket ne peut pas être vide'
+                ], 400);
             }
             
             $rawData = $analyseTicket->start($content);
@@ -39,15 +54,28 @@ final class AnalyseTicketController extends AbstractController
     public function job(
         string $jobId,
         Request $request,
-        AnalyseTicket $analyseTicket
+        AnalyseTicket $analyseTicket,
+        TicketRepository $ticketRepository
     ): JsonResponse {
 
         try {
             $data = $request->toArray();
-            $content = $data['ticket'] ?? '';
+            $content = $data['ticket'] ?? null;
 
-            if (empty($content)) {
-                return $this->json(['error' => 'Le contenu du ticket ne peut pas être vide'], 400);
+            if (!$content && isset($data['ticketId'])) {
+                $ticket = $ticketRepository->find((int) $data['ticketId']);
+
+                if (!$ticket) {
+                    return $this->json(['error' => 'Ticket introuvable'], 404);
+                }
+
+                $content = $ticket->getContent(); // adapte si ton getter a un autre nom
+            }
+
+            if (!$content) {
+                return $this->json([
+                    'error' => 'Le contenu du ticket ne peut pas être vide'
+                ], 400);
             }
             
             $jobData = $analyseTicket->fetchJobAndPersistIfFinished(

@@ -7,6 +7,23 @@
       </p>
     </header>
 
+    <div class="ai-analyses__toolbar">
+      <button
+        type="button"
+        :disabled="analysing"
+        @click="launchAnalysis"
+      >
+        {{ analysing ? 'Analyse en cours…' : 'Analyser avec l’IA' }}
+      </button>
+    
+      <p
+        v-if="analysisError"
+        class="ai-analyses__state error"
+      >
+        {{ analysisError }}
+      </p>
+    </div>
+
     <!-- Loading -->
 
     <p v-if="loading" class="ai-analyses__state">
@@ -145,19 +162,20 @@ const props = defineProps({
 const analyses = ref([])
 const loading = ref(true)
 const error = ref(false)
+const analysing = ref(false)
+const analysisError = ref(null)
 const submitting = ref({})
 const submitted = ref({})
 const comments = ref({})
 const feedbacks = ref({})
 const feedbacksLoading = ref({})
 
-/**
- * Lifecycle
- */
-onMounted(async () => {
+async function loadAnalyses() {
+  loading.value = true
+  error.value = false
 
   try {
-    const url = `/api/tickets/${props.ticketId}/ai-analyses`;
+    const url = `/api/tickets/${props.ticketId}/ai-analyses`
     const response = await fetch(
       url,
       {
@@ -177,7 +195,93 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+/**
+ * Lifecycle
+ */
+onMounted(loadAnalyses)
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+async function pollJob(jobId) {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const response = await fetch(`/api/analyse/jobs/${jobId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        ticketId: props.ticketId,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: 'Erreur lors de la récupération du job' }))
+
+      throw new Error(errorData.error || `Erreur HTTP: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data.status === 'finished') {
+      return data.result
+    }
+
+    if (data.status === 'failed') {
+      throw new Error('Le job IA a échoué')
+    }
+
+    await sleep(1000)
+  }
+
+  throw new Error(
+    'L’analyse IA prend trop de temps. Le service de traitement est peut-être indisponible. Veuillez réessayer dans quelques instants.'
+  )
+}
+
+async function launchAnalysis() {
+  analysing.value = true
+  analysisError.value = null
+
+  try {
+    const response = await fetch('/api/ticket/analyse', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        ticketId: props.ticketId,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: 'Erreur lors de l’analyse' }))
+
+      throw new Error(errorData.error || `Erreur HTTP: ${response.status}`)
+    }
+
+    const jobData = await response.json()
+
+    if (!jobData.job_id) {
+      throw new Error('Aucun job_id retourné par le serveur')
+    }
+
+    await pollJob(jobData.job_id)
+
+    await loadAnalyses()
+  } catch (e) {
+    analysisError.value = e.message
+  } finally {
+    analysing.value = false
+  }
+}
 
 /**
  * Send feedback
@@ -258,6 +362,36 @@ function formatDate(isoDate) {
 </script>
 
 <style scoped>
+
+.ai-analyses__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.ai-analyses__toolbar button {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #0369a1;
+  background: #e0f2fe;
+  color: #0369a1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-analyses__toolbar button:hover:not(:disabled) {
+  background: #bae6fd;
+  border-color: #0284c7;
+}
+
+.ai-analyses__toolbar button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .ai-analyses {
   margin-top: 2rem;
   padding: 1.5rem;

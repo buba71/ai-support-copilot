@@ -135,7 +135,9 @@ const pollJob = async (id) => {
     await sleep(1000)
   }
 
-  throw new Error('Le job IA n’a pas terminé dans le délai prévu')
+  throw new Error(
+  'L’analyse IA prend trop de temps. Le service de traitement est peut-être indisponible. Veuillez réessayer dans quelques instants.'
+)
 }
 
 const analyzeTicket = async () => {
