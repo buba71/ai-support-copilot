@@ -2,7 +2,10 @@ import json
 from datetime import datetime, UTC
 from pathlib import Path
 
-
+"""
+ DLQService is responsible for storing failed jobs into a dead-letter queue (DLQ).
+ It writes the failed job details into a JSON Lines file for later analysis or reprocessing.
+"""
 class DLQService:
     def __init__(self, filepath: str = "dlq/failed_jobs.jsonl"):
         self.filepath = Path(filepath)

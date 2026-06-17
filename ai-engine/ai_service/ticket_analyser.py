@@ -5,14 +5,16 @@ import uuid
 from pydantic import ValidationError
 
 from ai_service.prompts import TICKET_ANALYSIS_PROMPT
-from ai_service.models import TicketAnalysis, ReliableTicketAnalysis, SupportCopilotResponse
 from ai_service.monitoring import MonitoringService
 from ai_service.guardrails import GuardrailEngine
 from ai_service.cache.llm_cache_service import LLMCacheService
 from ai_service.core.logging.config import get_logger
 from ai_service.core.interfaces.llm_client_interface import LLMClientInterface
 from ai_service.core.interfaces.rag_service_interface import RagServiceInterface
+from ai_service.core.schemas.reliable_ticket_analysis import ReliableTicketAnalysis
 from ai_service.core.schemas.retrieval import RetrievedChunk
+from ai_service.core.schemas.support_copilot_response import SupportCopilotResponse
+from ai_service.core.schemas.ticket_analysis import TicketAnalysis
 
 from ai_service.post_processing.decision_normalizer import DecisionNormalizer
 
