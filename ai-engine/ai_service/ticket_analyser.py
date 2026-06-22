@@ -17,6 +17,8 @@ from ai_service.core.schemas.support_copilot_response import SupportCopilotRespo
 from ai_service.core.schemas.ticket_analysis import TicketAnalysis
 from ai_service.post_processing.decision_normalizer import DecisionNormalizer
 from ai_service.classification.ticket_classifier import TicketClassifier
+from ai_service.customer_response.customer_response_builder import CustomerResponseBuilder
+from ai_service.reliability.reliability_service import ReliabilityService
 
 logger = get_logger(__name__)
 
@@ -30,7 +32,9 @@ class TicketAnalyzer:
         guardrail_engine: GuardrailEngine,
         cache_service: LLMCacheService,
         normalizer: DecisionNormalizer,
-        classifier: TicketClassifier
+        classifier: TicketClassifier,
+        customer_response_builder: CustomerResponseBuilder,
+        reliability_service: ReliabilityService
     ):
         self.llm = llm_client
         self.rag = rag_service
@@ -39,13 +43,14 @@ class TicketAnalyzer:
         self.cache = cache_service
         self.normalizer = normalizer
         self.classifier = classifier
-
+        self.customer_response_builder = customer_response_builder
+        self.reliability_service = reliability_service
     def analyze(self, ticket_text: str, use_rag: bool = True, request_id: str | None = None) -> dict:
         """
         Main orchestration method using specialized private methods.
         """
         total_start = time.time()   
-        
+
         # Generate request_id if not provided
         if request_id is None:
             request_id = f"req_{uuid.uuid4().hex[:8]}"
@@ -143,7 +148,7 @@ class TicketAnalyzer:
 
         guardrail_reason = "Guardrail triggered" if guardrail_triggered else None
 
-        reliability_fields = self._build_reliability_fields(
+        reliability_fields = self.reliability_service.evaluate(
             retrieved_chunks=rag_results,
             guardrail_reason=guardrail_reason,
             request_id=request_id
@@ -168,8 +173,8 @@ class TicketAnalyzer:
 
         reliable_decision["rag_documents"] = rag_documents
 
-        draft_reply = self._build_draft_reply(reliable_decision)
-        
+        draft_reply = self.customer_response_builder.build_from_analysis(reliable_decision)
+
         logger.info(
             "[%s][BUSINESS] draft_reply_generated",
             request_id
@@ -289,98 +294,3 @@ class TicketAnalyzer:
             for doc in rag_results
         ]
         return updated_decision, triggered
-
-    def _build_reliability_fields(
-        self,
-        retrieved_chunks: list[RetrievedChunk],
-        guardrail_reason: str | None,
-        request_id: str
-    ) -> dict:
-
-        used_sources = list(dict.fromkeys(
-            chunk.source
-            for chunk in retrieved_chunks
-            if chunk.source
-        ))
-
-        scores = [
-            chunk.score
-            for chunk in retrieved_chunks
-            if chunk.score is not None
-        ]
-
-        best_score = max(scores) if scores else None
-
-        if not used_sources or best_score is None or best_score < 0.45:
-            logger.warning(
-                "[%s][BUSINESS] insufficient_context_detected best_score=%s",
-                request_id, best_score
-            )
-
-            logger.warning(
-                "[%s][BUSINESS] confidence_score=0.35 insufficient_context=True",
-                request_id
-            )
-
-            return {
-                "confidence_score": 0.35,
-                "used_sources": used_sources,
-                "insufficient_context": True,
-                "fallback_reason": "No sufficiently relevant source found",
-            }
-
-        confidence_score = 0.8
-        fallback_reason = None
-        
-        if guardrail_reason:
-
-            confidence_score = min(
-                confidence_score,
-                0.75
-            )
-            fallback_reason = guardrail_reason
-
-        logger.info(
-            "[%s][BUSINESS] confidence_score=%s insufficient_context=%s",
-            request_id, confidence_score, False
-        )
-        
-        return {
-            "confidence_score": confidence_score,
-            "used_sources": used_sources,
-            "insufficient_context": False,
-            "fallback_reason": fallback_reason
-        }
-
-    def _build_draft_reply(self, analysis: dict) -> str:
-        if analysis.get("insufficient_context"):
-            return (
-                "Bonjour,\n\n"
-                "Merci pour votre message. "
-                "Nous avons bien reçu votre demande, mais les informations disponibles "
-                "ne permettent pas encore d’apporter une réponse définitive. "
-                "Votre dossier va être vérifié par un conseiller afin de vous apporter "
-                "une réponse adaptée.\n\n"
-                "Cordialement,\n"
-                "Le service client"
-            )
-
-        if analysis.get("escalation_required"):
-            return (
-                "Bonjour,\n\n"
-                "Merci pour votre message. "
-                "Votre demande nécessite une vérification approfondie par notre équipe support. "
-                "Nous allons transmettre votre dossier à un conseiller spécialisé afin de vous "
-                "apporter une réponse adaptée.\n\n"
-                "Cordialement,\n"
-                "Le service client"
-            )
-
-        return (
-            "Bonjour,\n\n"
-            "Merci pour votre message. "
-            "Après analyse de votre demande, notre équipe a identifié la procédure applicable. "
-            "Nous allons traiter votre dossier conformément à notre politique support.\n\n"
-            "Cordialement,\n"
-            "Le service client"
-        )
