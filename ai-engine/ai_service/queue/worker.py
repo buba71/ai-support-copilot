@@ -1,12 +1,12 @@
-from ai_service.service_factory import get_ticket_analyzer
+from ai_service.service_factory import get_ticket_pipeline
 from ai_service.queue.retryableJobError import RetryableJobError
 from ai_service.queue.nonRetryableJobError import NonRetryableJobError
 
-analyzer = get_ticket_analyzer()
+pipeline = get_ticket_pipeline()
 
 def process_ticket(ticket_text: str):
 
-    result = analyzer.analyze(ticket_text)
+    result = pipeline.run(ticket_text)
 
     if "error" in result:
         error_message = result["error"]
