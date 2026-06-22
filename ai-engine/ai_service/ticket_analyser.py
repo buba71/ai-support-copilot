@@ -15,8 +15,8 @@ from ai_service.core.schemas.reliable_ticket_analysis import ReliableTicketAnaly
 from ai_service.core.schemas.retrieval import RetrievedChunk
 from ai_service.core.schemas.support_copilot_response import SupportCopilotResponse
 from ai_service.core.schemas.ticket_analysis import TicketAnalysis
-
 from ai_service.post_processing.decision_normalizer import DecisionNormalizer
+from ai_service.classification.ticket_classifier import TicketClassifier
 
 logger = get_logger(__name__)
 
@@ -29,7 +29,8 @@ class TicketAnalyzer:
         monitoring_service: MonitoringService,
         guardrail_engine: GuardrailEngine,
         cache_service: LLMCacheService,
-        normalizer: DecisionNormalizer
+        normalizer: DecisionNormalizer,
+        classifier: TicketClassifier
     ):
         self.llm = llm_client
         self.rag = rag_service
@@ -37,6 +38,7 @@ class TicketAnalyzer:
         self.guardrail = guardrail_engine
         self.cache = cache_service
         self.normalizer = normalizer
+        self.classifier = classifier
 
     def analyze(self, ticket_text: str, use_rag: bool = True, request_id: str | None = None) -> dict:
         """
@@ -49,6 +51,16 @@ class TicketAnalyzer:
             request_id = f"req_{uuid.uuid4().hex[:8]}"
 
         logger.info("[%s][TECH] analyze_start use_rag=%s", request_id, use_rag)
+
+        classification = self.classifier.classify(ticket_text)
+
+        logger.info(
+            "[%s][BUSINESS] classification | category=%s | urgency=%s | complexity=%s",
+            request_id,
+            classification.category,
+            classification.urgency,
+            classification.complexity
+        )
 
         retrieval_start = time.time()
         rag_results, context = self._get_context(ticket_text, use_rag, request_id)

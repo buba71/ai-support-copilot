@@ -7,6 +7,7 @@ from ai_service.retrieval.chroma_retriever import ChromaRetriever
 from ai_service.infrastructure.vector_db import VectorDB
 from ai_service.ticket_analyser import TicketAnalyzer
 from ai_service.post_processing.decision_normalizer import DecisionNormalizer
+from ai_service.classification.ticket_classifier import TicketClassifier
 from ai_service.infrastructure.redis_connection import get_redis_connection
 
 def get_ticket_analyzer() -> TicketAnalyzer:
@@ -31,5 +32,6 @@ def get_ticket_analyzer() -> TicketAnalyzer:
         monitoring_service=MonitoringService(),
         guardrail_engine=GuardrailEngine(),
         cache_service=LLMCacheService(redis_client=redis_conn),
-        normalizer=DecisionNormalizer()
+        normalizer=DecisionNormalizer(),
+        classifier=TicketClassifier()
     )
