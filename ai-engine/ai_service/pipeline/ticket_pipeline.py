@@ -1,6 +1,5 @@
 from ai_service.classification.ticket_classifier import TicketClassifier
 from ai_service.pipeline.routing_service import RoutingService
-from ai_service.pipeline.retrieval_profile import RetrievalProfile
 from ai_service.ticket_analyser import TicketAnalyzer
 
 
@@ -32,11 +31,13 @@ class TicketPipeline:
             ticket_text=ticket_text,
             use_rag=use_rag,
             request_id=request_id,
+            retrieval_k=profile.top_k
         )
 
         result["meta"]["pipeline"] = {
             "classification": classification.model_dump(),
-            "retrieval_profile": profile.value,
+            "retrieval_profile": profile.name.value,
+            "retrieval_top_k": profile.top_k,
         }
 
         return result

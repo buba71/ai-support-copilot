@@ -45,7 +45,7 @@ class TicketAnalyzer:
         self.classifier = classifier
         self.customer_response_builder = customer_response_builder
         self.reliability_service = reliability_service
-    def analyze(self, ticket_text: str, use_rag: bool = True, request_id: str | None = None) -> dict:
+    def analyze(self, ticket_text: str, use_rag: bool = True, request_id: str | None = None, retrieval_k: int = 4) -> dict:
         """
         Main orchestration method using specialized private methods.
         """
@@ -226,9 +226,9 @@ class TicketAnalyzer:
 
         return result
 
-    def _get_context(self, ticket_text: str, use_rag: bool, request_id: str | None = None) -> tuple[list[RetrievedChunk], str]:
+    def _get_context(self, ticket_text: str, use_rag: bool, request_id: str | None = None, retrieval_k: int = 4) -> tuple[list[RetrievedChunk], str]:
         if use_rag:
-            rag_results = self.rag.search(ticket_text, k=4, request_id=request_id)
+            rag_results = self.rag.search(ticket_text, k=retrieval_k, request_id=request_id)
             context = "\n\n".join(doc.content for doc in rag_results)
             return rag_results, context
         return [], ""
