@@ -19,6 +19,7 @@ from ai_service.post_processing.decision_normalizer import DecisionNormalizer
 from ai_service.classification.ticket_classifier import TicketClassifier
 from ai_service.customer_response.customer_response_builder import CustomerResponseBuilder
 from ai_service.reliability.reliability_service import ReliabilityService
+from ai_service.pipeline.context_composer import ContextComposer
 
 logger = get_logger(__name__)
 
@@ -34,7 +35,8 @@ class TicketAnalyzer:
         normalizer: DecisionNormalizer,
         classifier: TicketClassifier,
         customer_response_builder: CustomerResponseBuilder,
-        reliability_service: ReliabilityService
+        reliability_service: ReliabilityService,
+        context_composer: ContextComposer
     ):
         self.llm = llm_client
         self.rag = rag_service
@@ -45,7 +47,9 @@ class TicketAnalyzer:
         self.classifier = classifier
         self.customer_response_builder = customer_response_builder
         self.reliability_service = reliability_service
-    def analyze(self, ticket_text: str, use_rag: bool = True, request_id: str | None = None, retrieval_k: int = 4) -> dict:
+        self.context_composer = context_composer
+
+    def analyze(self, ticket_text: str, use_rag: bool = True, request_id: str | None = None, retrieval_k: int = 4, tool_results: dict | None = None) -> dict:
         """
         Main orchestration method using specialized private methods.
         """
@@ -68,7 +72,13 @@ class TicketAnalyzer:
         )
 
         retrieval_start = time.time()
-        rag_results, context = self._get_context(ticket_text, use_rag, request_id)
+        rag_results, context = self._get_context(
+            ticket_text=ticket_text,
+            use_rag=use_rag,
+            request_id=request_id,
+            retrieval_k=retrieval_k,
+            tool_results=tool_results
+        )
         retrieval_latency_ms = int((time.time() - retrieval_start) * 1000)
 
         logger.info(
@@ -226,10 +236,21 @@ class TicketAnalyzer:
 
         return result
 
-    def _get_context(self, ticket_text: str, use_rag: bool, request_id: str | None = None, retrieval_k: int = 4) -> tuple[list[RetrievedChunk], str]:
+    def _get_context(
+            self,
+            ticket_text: str,
+            use_rag: bool,
+            request_id: str | None = None,
+            retrieval_k: int = 4,
+            tool_results: dict | None = None
+    ) -> tuple[list[RetrievedChunk], str]:
+        
         if use_rag:
             rag_results = self.rag.search(ticket_text, k=retrieval_k, request_id=request_id)
-            context = "\n\n".join(doc.content for doc in rag_results)
+            context = self.context_composer.compose(
+                rag_results=rag_results,
+                tool_results=tool_results,
+            )
             return rag_results, context
         return [], ""
 
