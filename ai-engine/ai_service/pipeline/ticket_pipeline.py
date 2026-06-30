@@ -2,6 +2,9 @@ from ai_service.classification.ticket_classifier import TicketClassifier
 from ai_service.pipeline.routing_service import RoutingService
 from ai_service.ticket_analyser import TicketAnalyzer
 from ai_service.tools.warranty_eligibility_tool import InMemoryWarrantyEligibilityTool
+from ai_service.core.logging.config import get_logger
+
+logger = get_logger(__name__)
 
 
 class TicketPipeline:
@@ -26,6 +29,14 @@ class TicketPipeline:
 
         tool_results = {}
         classification = self.classifier.classify(ticket_text)
+
+        logger.info(
+            "[%s][BUSINESS] classification | category=%s | urgency=%s | complexity=%s",
+            request_id,
+            classification.category,
+            classification.urgency,
+            classification.complexity
+        )
 
         profile = self.router.select_profile(
             category=classification.category,

@@ -16,7 +16,6 @@ from ai_service.core.schemas.retrieval import RetrievedChunk
 from ai_service.core.schemas.support_copilot_response import SupportCopilotResponse
 from ai_service.core.schemas.ticket_analysis import TicketAnalysis
 from ai_service.post_processing.decision_normalizer import DecisionNormalizer
-from ai_service.classification.ticket_classifier import TicketClassifier
 from ai_service.customer_response.customer_response_builder import CustomerResponseBuilder
 from ai_service.reliability.reliability_service import ReliabilityService
 from ai_service.pipeline.context_composer import ContextComposer
@@ -33,7 +32,6 @@ class TicketAnalyzer:
         guardrail_engine: GuardrailEngine,
         cache_service: LLMCacheService,
         normalizer: DecisionNormalizer,
-        classifier: TicketClassifier,
         customer_response_builder: CustomerResponseBuilder,
         reliability_service: ReliabilityService,
         context_composer: ContextComposer
@@ -44,7 +42,6 @@ class TicketAnalyzer:
         self.guardrail = guardrail_engine
         self.cache = cache_service
         self.normalizer = normalizer
-        self.classifier = classifier
         self.customer_response_builder = customer_response_builder
         self.reliability_service = reliability_service
         self.context_composer = context_composer
@@ -61,16 +58,6 @@ class TicketAnalyzer:
 
         logger.info("[%s][TECH] analyze_start use_rag=%s", request_id, use_rag)
 
-        classification = self.classifier.classify(ticket_text)
-
-        logger.info(
-            "[%s][BUSINESS] classification | category=%s | urgency=%s | complexity=%s",
-            request_id,
-            classification.category,
-            classification.urgency,
-            classification.complexity
-        )
-
         retrieval_start = time.time()
         rag_results, context = self._get_context(
             ticket_text=ticket_text,
@@ -79,6 +66,14 @@ class TicketAnalyzer:
             retrieval_k=retrieval_k,
             tool_results=tool_results
         )
+
+        logger.info(
+            "[%s][TECH] context_composed length=%s has_tool_context=%s",
+            request_id,
+            len(context),
+            "=== TOOL CONTEXT ===" in context,
+        )
+
         retrieval_latency_ms = int((time.time() - retrieval_start) * 1000)
 
         logger.info(
@@ -230,7 +225,14 @@ class TicketAnalyzer:
             post_processing_latency_ms=post_processing_latency_ms,
             total_latency_ms=total_latency_ms,
             latency_ms=total_latency_ms, # legacy field kept for backward compatibility
+
         )
+
+        result["meta"]["context_debug"] = {
+            "has_tool_context": "=== TOOL CONTEXT ===" in context,
+            "has_rag_context": "=== RAG CONTEXT ===" in context,
+            "context_length": len(context),
+        }
 
         self.cache.set(prompt, result)
 

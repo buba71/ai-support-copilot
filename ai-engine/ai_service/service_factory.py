@@ -7,7 +7,6 @@ from ai_service.retrieval.chroma_retriever import ChromaRetriever
 from ai_service.infrastructure.vector_db import VectorDB
 from ai_service.ticket_analyser import TicketAnalyzer
 from ai_service.post_processing.decision_normalizer import DecisionNormalizer
-from ai_service.classification.ticket_classifier import TicketClassifier
 from ai_service.infrastructure.redis_connection import get_redis_connection
 from ai_service.customer_response.customer_response_builder import CustomerResponseBuilder
 from ai_service.reliability.reliability_service import ReliabilityService
@@ -39,7 +38,6 @@ def get_ticket_analyzer() -> TicketAnalyzer:
         guardrail_engine=GuardrailEngine(),
         cache_service=LLMCacheService(redis_client=redis_conn),
         normalizer=DecisionNormalizer(),
-        classifier=TicketClassifier(),
         customer_response_builder=CustomerResponseBuilder(),
         reliability_service=ReliabilityService(),
         context_composer=ContextComposer()
@@ -48,7 +46,6 @@ def get_ticket_analyzer() -> TicketAnalyzer:
 def get_ticket_pipeline() -> TicketPipeline:
    
     return TicketPipeline(
-        classifier=TicketClassifier(),
         router=RoutingService(),
         analyzer=get_ticket_analyzer(),
         warranty_tool=InMemoryWarrantyEligibilityTool()
