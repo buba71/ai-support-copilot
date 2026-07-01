@@ -11,6 +11,7 @@ from ai_service.infrastructure.redis_connection import get_redis_connection
 from ai_service.customer_response.customer_response_builder import CustomerResponseBuilder
 from ai_service.reliability.reliability_service import ReliabilityService
 from ai_service.pipeline.ticket_pipeline import TicketPipeline
+from ai_service.classification.ticket_classifier import TicketClassifier
 from ai_service.pipeline.routing_service import RoutingService
 from ai_service.tools.warranty_eligibility_tool import InMemoryWarrantyEligibilityTool
 from ai_service.pipeline.context_composer import ContextComposer
@@ -46,6 +47,7 @@ def get_ticket_analyzer() -> TicketAnalyzer:
 def get_ticket_pipeline() -> TicketPipeline:
    
     return TicketPipeline(
+        classifier=TicketClassifier(),
         router=RoutingService(),
         analyzer=get_ticket_analyzer(),
         warranty_tool=InMemoryWarrantyEligibilityTool()

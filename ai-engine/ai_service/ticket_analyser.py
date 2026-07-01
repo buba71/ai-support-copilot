@@ -228,7 +228,7 @@ class TicketAnalyzer:
 
         )
 
-        result["meta"]["context_debug"] = {
+        result["meta"]["context"] = {
             "has_tool_context": "=== TOOL CONTEXT ===" in context,
             "has_rag_context": "=== RAG CONTEXT ===" in context,
             "context_length": len(context),
